@@ -22,6 +22,9 @@ import java.util.Map;
  * 
  */
 public class Agent {
+
+	private static final boolean DEBUG = true;
+
 	/**
 	 * The default constructor for your Agent. Make sure to execute any
 	 * processing necessary before your Agent starts solving problems here.
@@ -62,28 +65,32 @@ public class Agent {
 
 		HashMap<String, Figure> figures = CreateFigures(problem.getFigures());
 
+		HashMap<String, Shape> shapes = CreateShapeMap();
+
 		if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByOne) {
-			return SolveTwoByOne(figures);
+			return SolveTwoByOne(figures, shapes);
 		}
 
 		return "1";
 	}
 
-	private String SolveTwoByOne(HashMap<String, Figure> figures) {			
+	private String SolveTwoByOne(HashMap<String, Figure> figures, HashMap<String, Shape> shapes) {			
 
 		Figure figureA = figures.get("A");
 		Figure figureB = figures.get("B");
 		Figure figureC = figures.get("C");
 
-		FigurePairMapping ABMapping = CreateFigurePairMapping(figures.get("A"), figures.get("B"));
-		FigurePairMapping ACMapping = CreateFigurePairMapping(figures.get("A"), figures.get("C"));
+		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB);
+		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC);
 
-		// DEBUG OUTPUT		
-//		for(NodeMapping map : ABMapping.NodeMappings) {
-//			String node1Name = map.Node1 != null ? map.Node1.Name : "";
-//			String node2Name = map.Node2 != null ? map.Node2.Name : "";
-//			System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-//		}
+		// DEBUG OUTPUT	
+		if(DEBUG) {
+			for(NodeMapping map : ABMapping.NodeMappings) {
+				String node1Name = map.Node1 != null ? map.Node1.Name : "";
+				String node2Name = map.Node2 != null ? map.Node2.Name : "";
+				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+			}
+		}
 
 		List<Edge> edges = new ArrayList<Edge>();	
 
@@ -125,9 +132,10 @@ public class Agent {
 				// Node wasn't deleted
 				myObject2.Name = edge.NodeA.Name;			
 
-				for(Transformation transformation : edge.GetTransformations()) {
+				List<Transformation> transformations = edge.GetTransformations();
+				for(Transformation transformation : transformations) {
 					if(transformation.BeforeAttributeValue != null && transformation.AfterAttributeValue != null) {
-						if(transformation.BeforeAttributeValue.equals(transformation.AfterAttributeValue)) {
+						if(!transformation.attributeChanged()) {
 
 							// That means transformation is unchanged
 
@@ -171,7 +179,7 @@ public class Agent {
 																int difference = Common.FormatAngle(secondAngle - firstAngle);																									
 
 																myObject2.addAttribute(transformation.AttributeName, String.valueOf(Common.FormatAngle(CAngle + difference)));
-																
+
 																int difference2 = Common.FormatAngle(secondAngle + firstAngle);																									
 
 																myObject2.addAttribute(transformation.AttributeName, String.valueOf(Common.FormatAngle(CAngle + difference2)));
@@ -224,13 +232,15 @@ public class Agent {
 			}
 
 			if(myObject2.Name != null) {
-//				System.out.println("Expected Object:");
-//				System.out.println(myObject2.Name);
-//				for(AttributeGroup group : myObject2.AttributeGroups) {
-//					for(Attribute att : group.Attributes) {
-//						System.out.println(att.Name + " : " + att.Value);
-//					}
-//				}
+				if(DEBUG) {
+					System.out.println("Expected Object:");
+					System.out.println(myObject2.Name);
+					for(AttributeGroup group : myObject2.AttributeGroups) {
+						for(Attribute att : group.Attributes) {
+							System.out.println(att.Name + " : " + att.Value);
+						}
+					}
+				}
 
 				expectedObjects.add(myObject2);
 
@@ -258,15 +268,17 @@ public class Agent {
 				FigurePairMapping CNumMapping = CreateFigurePairMapping(figures.get("C"), figures.get(currentAnswer.AnswerFigure.getName()));
 
 				// DEBUG OUTPUT		
-				//				System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
-				//				for(NodeMapping map : CNumMapping.NodeMappings) {
-				//					String node1Name = map.Node1 != null ? map.Node1.Name : "";
-				//					String node2Name = map.Node2 != null ? map.Node2.Name : "";
-				//					System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-				//				}
+				if(DEBUG) {
+					System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
+					for(NodeMapping map : CNumMapping.NodeMappings) {
+						String node1Name = map.Node1 != null ? map.Node1.Name : "";
+						String node2Name = map.Node2 != null ? map.Node2.Name : "";
+						System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+					}
 
 				//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
-
+				}
+				
 				List<NodeMapping> expectedObjectMappings = CreateNodeViableObjectMapping(expectedObjects, currentAnswer.AnswerFigure.Nodes);
 
 				for(ViableObject myObject : expectedObjects) {
@@ -297,7 +309,7 @@ public class Agent {
 									int score = 0;
 
 									score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, myObject.getShape());
-									
+
 									List<String> myValues = Arrays.asList(myAttribute.Value.split(","));
 									List<String> nodeValues = Arrays.asList(currentAttribute.Value.split(","));
 
@@ -325,15 +337,23 @@ public class Agent {
 		// Sort answers by score
 		Collections.sort(allAnswers);
 
-//		System.out.println("POSSIBLE ANSWERS");
-//		for(ViableAnswer pAnswer : allAnswers) {
-//			if(!pAnswer.Incompatible) {
-//				System.out.println(pAnswer.AnswerFigure.getName() + " : " + pAnswer.Score);
-//			}
-//		}
-//
-//		System.out.println("");
+		if(DEBUG) {
+			System.out.println("POSSIBLE ANSWERS");
+			for(ViableAnswer pAnswer : allAnswers) {
+				if(!pAnswer.Incompatible) {
+					System.out.println(pAnswer.AnswerFigure.getName() + " : " + pAnswer.Score);
+				}
+			}
 
+			System.out.println("");
+		}
+		
+		// Return -1 if guessing during debug
+		if(DEBUG && allAnswers.size() > 1 && allAnswers.get(0).Score == allAnswers.get(1).Score) {
+			System.out.println("Guessing...");
+			return "GUESS";
+		}
+		
 		return allAnswers.get(0).AnswerFigure.getName();
 	}
 
@@ -363,6 +383,51 @@ public class Agent {
 		}
 
 		return myFigures;
+	}
+
+	private HashMap<String,Shape> CreateShapeMap() {
+
+		HashMap<String,Shape> shapes = new HashMap<String,Shape>();
+
+		// Create shapes
+		Shape circle = new Shape(1, true, true, 1);
+		Shape square = new Shape(4, true, true, 90);
+		Shape plus = new Shape(12, true, true, 90);
+		Shape triangle = new Shape(3, false, true, 120);
+		Shape pacman = new Shape(3, true, false, 360);
+		Shape diamond = new Shape(4, true, true, 90);
+		Shape arrow = new Shape(7, true, false, 360);
+		Shape halfarrow = new Shape(5, false, false, 360);
+		Shape rectangle = new Shape(4, true, true, 180);
+		Shape pentagon = new Shape(5, false, true, 72);
+		Shape hexagon = new Shape(6, true, true, 60);
+		Shape heptagon = new Shape(7, false, true, 360);
+		Shape septagon = new Shape(7, false, true, 360);
+		Shape octogon = new Shape(8, true, true, 45);
+
+		// Add shape relations
+		square.setRelatedShape(square.new ShapeRelation(diamond, 45));
+		diamond.setRelatedShape(diamond.new ShapeRelation(square, 45));			
+		heptagon.setRelatedShape(heptagon.new ShapeRelation(septagon, 0));
+		septagon.setRelatedShape(septagon.new ShapeRelation(heptagon, 0));
+
+		// Add shapes to shape map
+		shapes.put("circle", circle);
+		shapes.put("square", square);
+		shapes.put("plus", plus);
+		shapes.put("triangle", triangle);
+		shapes.put("Pac-Man", pacman);
+		shapes.put("diamond", diamond);
+		shapes.put("arrow", arrow);
+		shapes.put("half-arrow", halfarrow);
+		shapes.put("rectangle", rectangle);
+		shapes.put("pentagon", pentagon);
+		shapes.put("hexagon", hexagon);
+		shapes.put("heptagon", heptagon);
+		shapes.put("septagon", septagon);
+		shapes.put("octogon", octogon);
+
+		return shapes;
 	}
 
 	private List<NodeMapping> CreateNodePairMapping(List<Node> nodeList1, List<Node> nodeList2) {
