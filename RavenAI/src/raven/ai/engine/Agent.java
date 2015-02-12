@@ -63,6 +63,11 @@ public class Agent {
 	 */
 	public String Solve(RavensProblem problem) {
 
+		if(DEBUG) {
+			System.out.println("PROBLEM " + problem.getName());
+			System.out.println("============================");
+		}
+
 		HashMap<String, Figure> figures = CreateFigures(problem.getFigures());
 
 		HashMap<String, Shape> shapes = CreateShapeMap();
@@ -85,11 +90,14 @@ public class Agent {
 
 		// DEBUG OUTPUT	
 		if(DEBUG) {
+
+			System.out.println("Node Mappings");			
 			for(NodeMapping map : ABMapping.NodeMappings) {
 				String node1Name = map.Node1 != null ? map.Node1.Name : "";
 				String node2Name = map.Node2 != null ? map.Node2.Name : "";
 				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
 			}
+			System.out.println("----------------------------");
 		}
 
 		List<Edge> edges = new ArrayList<Edge>();	
@@ -125,12 +133,14 @@ public class Agent {
 
 		for(Edge edge : edges) {
 
-			ViableObject myObject2 = new ViableObject();			
+			ViableObject expectedObject = new ViableObject();			
 
 			if(edge.NodeA != null && edge.NodeB != null) {							
 
 				// Node wasn't deleted
-				myObject2.Name = edge.NodeA.Name;			
+
+				// Assign temporary name
+				expectedObject.Name = edge.NodeA.Name;			
 
 				List<Transformation> transformations = edge.GetTransformations();
 				for(Transformation transformation : transformations) {
@@ -139,68 +149,61 @@ public class Agent {
 
 							// That means transformation is unchanged
 
-							for(Node cNode : figureC.Nodes) {
-								if(cNode.Name.equals(edge.NodeA.Name)) {
-									for(Attribute currentAttribute : cNode.Attributes) {
-										if(currentAttribute.Name.equals(transformation.AttributeName)) {
-											myObject2.addAttribute(transformation.AttributeName, currentAttribute.Value);										
-										}
-									}
+							Node cNode = figureC.FindNode(edge.NodeA.Name);	
+							if(cNode != null) {
+								Attribute cNodeAttribute = cNode.findAttribute(transformation.AttributeName);
+								
+								if(cNodeAttribute != null) {
+									expectedObject.addAttribute(transformation.AttributeName, cNodeAttribute.Value);
 								}
 							}
-
 						}					
 						else {
-							for(Node cNode : figureC.Nodes) {
-								if(cNode.Name.equals(edge.NodeA.Name)) {
-									for(Attribute currentAttribute : cNode.Attributes) {
-										if(currentAttribute.Name.equals(transformation.AttributeName)) {
-											for(Node bNode : figureB.Nodes) {
-												if(bNode.Name.equals(cNode.Name)) {
-													for(Attribute bAttribute : bNode.Attributes) {
-														if(bAttribute.Name.equals(transformation.AttributeName)) {
-															AttributeType attributeType = Common.GetAttributeType(transformation.AttributeName);
-															if(attributeType == AttributeType.Additive) {
-																List<String> cAttributeValues = Arrays.asList(currentAttribute.Value.split(","));
-																List<String> bAttributeValues = Arrays.asList(bAttribute.Value.split(","));																
-																myObject2.addAttribute(transformation.AttributeName, Common.CombineLists(cAttributeValues, bAttributeValues));
-															}
-															else if(attributeType == AttributeType.Positional) {
-																List<String> cAttributeValues = Arrays.asList(currentAttribute.Value.split(","));
-																List<String> bAttributeValues = Arrays.asList(bAttribute.Value.split(","));																
+							Node cNode = figureC.FindNode(edge.NodeA.Name);								
+							Node bNode = figureB.FindNode(cNode.Name);
 
-																myObject2.addAttribute(transformation.AttributeName, Common.CombineLists(cAttributeValues, bAttributeValues));
-															}		
-															else if(attributeType == AttributeType.Angular) {
-																int firstAngle = Integer.parseInt(transformation.BeforeAttributeValue);
-																int secondAngle = Integer.parseInt(transformation.AfterAttributeValue);
-																int CAngle = Integer.parseInt(currentAttribute.Value);
+							if(cNode != null && bNode != null) {
 
-																int difference = Common.FormatAngle(secondAngle - firstAngle);																									
+								Attribute cNodeAttribute = cNode.findAttribute(transformation.AttributeName);	
+								Attribute bNodeAttribute = bNode.findAttribute(transformation.AttributeName);
 
-																myObject2.addAttribute(transformation.AttributeName, String.valueOf(Common.FormatAngle(CAngle + difference)));
-
-																int difference2 = Common.FormatAngle(secondAngle + firstAngle);																									
-
-																myObject2.addAttribute(transformation.AttributeName, String.valueOf(Common.FormatAngle(CAngle + difference2)));
-															}															
-
-															myObject2.addAttribute(transformation.AttributeName, bAttribute.Value);														
-
-														}
-													}
-												}
-											}    								
-										}
-									}
+								AttributeType attributeType = Common.GetAttributeType(transformation.AttributeName);
+								if(attributeType == AttributeType.Additive) {
+									List<String> cNodeAttributeValues = Arrays.asList(cNodeAttribute.Value.split(","));
+									List<String> bNodeAttributeValues = Arrays.asList(bNodeAttribute.Value.split(","));																
+									expectedObject.addAttribute(transformation.AttributeName, Common.CombineLists(cNodeAttributeValues, bNodeAttributeValues));
 								}
+								else if(attributeType == AttributeType.Positional) {
+									List<String> cNodeAttributeValues = Arrays.asList(cNodeAttribute.Value.split(","));
+									List<String> bNodeAttributeValues = Arrays.asList(bNodeAttribute.Value.split(","));																
+
+									expectedObject.addAttribute(transformation.AttributeName, Common.CombineLists(cNodeAttributeValues, bNodeAttributeValues));
+								}		
+								else if(attributeType == AttributeType.Angular) {
+									int firstAngle = Integer.parseInt(transformation.BeforeAttributeValue);
+									int secondAngle = Integer.parseInt(transformation.AfterAttributeValue);
+									int CAngle = Integer.parseInt(cNodeAttribute.Value);
+
+									int difference = Common.FormatAngle(secondAngle - firstAngle);																									
+
+									String angle1 = String.valueOf(Common.FormatAngle(CAngle + difference));
+									expectedObject.addAttribute(transformation.AttributeName, angle1);
+
+									int difference2 = Common.FormatAngle(secondAngle + firstAngle);																									
+
+									String angle2 = String.valueOf(Common.FormatAngle(CAngle + difference2));
+									expectedObject.addAttribute(transformation.AttributeName, angle2);
+								}															
+
+								expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
+
 							}
 						}	
 					}
 					else if(transformation.BeforeAttributeValue == null) {
 
 						// Attribute has been added
-						myObject2.addAttribute(transformation.AttributeName, transformation.AfterAttributeValue);
+						expectedObject.addAttribute(transformation.AttributeName, transformation.AfterAttributeValue);
 					}
 					else if(transformation.AfterAttributeValue == null) {
 
@@ -208,43 +211,54 @@ public class Agent {
 					}
 				}
 			}
+			else if(edge.NodeA != null && edge.NodeB == null) {
+
+				// Node has been added
+			}
+			else if(edge.NodeA == null && edge.NodeB != null) {
+
+				// Node has been deleted
+			}
 
 			// Check for any added attributes
 			for(Node bNode : figureB.Nodes) {
-				if(bNode.Name.equals(myObject2.Name)) {
-					if(bNode.getAttributeCount() > myObject2.getAttributeCount()) {
+				if(bNode.Name.equals(expectedObject.Name)) {
+					if(bNode.getAttributeCount() > expectedObject.getAttributeCount()) {
 						for(Attribute bAttribute : bNode.Attributes) {
 
 							boolean attributeFound = false;
 
-							for(Attribute myAttribute : myObject2.Attributes) {
+							for(Attribute myAttribute : expectedObject.Attributes) {
 								if(myAttribute.Name.equals(bAttribute.Name)) {
 									attributeFound = true;
 								}
 							}
 							if(!attributeFound) {
-								myObject2.Attributes.add(bAttribute);
+								expectedObject.Attributes.add(bAttribute);
 							}
-
 						}
 					}
 				}
 			}
 
-			if(myObject2.Name != null) {
+
+			if(expectedObject.Name != null) {
 				if(DEBUG) {
 					System.out.println("Expected Object:");
-					System.out.println(myObject2.Name);
-					for(AttributeGroup group : myObject2.AttributeGroups) {
+					System.out.println(expectedObject.Name);
+					for(AttributeGroup group : expectedObject.AttributeGroups) {
 						for(Attribute att : group.Attributes) {
 							System.out.println(att.Name + " : " + att.Value);
 						}
 					}
+					System.out.println("----------------------------");
 				}
 
-				expectedObjects.add(myObject2);
 
+				expectedObjects.add(expectedObject);
 			}
+
+
 		}	
 
 		// Make sure proper ratio of objects is present (add extras if necessary)
@@ -268,17 +282,17 @@ public class Agent {
 				FigurePairMapping CNumMapping = CreateFigurePairMapping(figures.get("C"), figures.get(currentAnswer.AnswerFigure.getName()));
 
 				// DEBUG OUTPUT		
-				if(DEBUG) {
-					System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
-					for(NodeMapping map : CNumMapping.NodeMappings) {
-						String node1Name = map.Node1 != null ? map.Node1.Name : "";
-						String node2Name = map.Node2 != null ? map.Node2.Name : "";
-						System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-					}
+				//				if(DEBUG) {
+				//					System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
+				//					for(NodeMapping map : CNumMapping.NodeMappings) {
+				//						String node1Name = map.Node1 != null ? map.Node1.Name : "";
+				//						String node2Name = map.Node2 != null ? map.Node2.Name : "";
+				//						System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+				//					}
 
 				//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
-				}
-				
+				//				}
+
 				List<NodeMapping> expectedObjectMappings = CreateNodeViableObjectMapping(expectedObjects, currentAnswer.AnswerFigure.Nodes);
 
 				for(ViableObject myObject : expectedObjects) {
@@ -303,29 +317,28 @@ public class Agent {
 					}
 
 					for(AttributeGroup group : myObject.AttributeGroups) {
-						for(Attribute myAttribute : group.Attributes) {					
-							for(Attribute currentAttribute : currentNode.Attributes) {
-								if(currentAttribute.Name.equals(myAttribute.Name)) {
-									int score = 0;
+						for(Attribute myAttribute : group.Attributes) {			
+							Attribute currentAttribute = currentNode.findAttribute(myAttribute.Name);
+							if(currentAttribute != null) {
+								int score = 0;
 
-									score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, myObject.getShape());
+								score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, myObject.getShape());
 
-									List<String> myValues = Arrays.asList(myAttribute.Value.split(","));
-									List<String> nodeValues = Arrays.asList(currentAttribute.Value.split(","));
+								List<String> myValues = Arrays.asList(myAttribute.Value.split(","));
+								List<String> nodeValues = Arrays.asList(currentAttribute.Value.split(","));
 
-									if(Common.GetAttributeType(myAttribute.Name) == AttributeType.Positional) {
-										for(int i = 0; i < myValues.size(); i++) {
-											myValues.set(i, CNumMapping.GetCorrespondingNode2Name(myValues.get(i)));											
-										}
+								if(Common.GetAttributeType(myAttribute.Name) == AttributeType.Positional) {
+									for(int i = 0; i < myValues.size(); i++) {
+										myValues.set(i, CNumMapping.GetCorrespondingNode2Name(myValues.get(i)));											
 									}
+								}
 
-									if(Common.ListsEqual(myValues, nodeValues)) {
-										currentAnswer.Score += myValues.size();
-									}
+								if(Common.ListsEqual(myValues, nodeValues)) {
+									currentAnswer.Score += myValues.size();
+								}
 
-									if(currentAttribute.Value.equals(myAttribute.Value)) {
-										currentAnswer.Score += score;									
-									}
+								if(currentAttribute.Value.equals(myAttribute.Value)) {
+									currentAnswer.Score += score;									
 								}
 							}
 						}
@@ -347,13 +360,13 @@ public class Agent {
 
 			System.out.println("");
 		}
-		
-		// Return -1 if guessing during debug
+
+		// Return GUESS if guessing during debug
 		if(DEBUG && allAnswers.size() > 1 && allAnswers.get(0).Score == allAnswers.get(1).Score) {
 			System.out.println("Guessing...");
 			return "GUESS";
 		}
-		
+
 		return allAnswers.get(0).AnswerFigure.getName();
 	}
 

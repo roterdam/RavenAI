@@ -77,4 +77,13 @@ public class Node {
 		}
 		return false;
 	}
+	
+	public Attribute findAttribute(String attributeName) {
+		
+		for(Attribute attribute : this.Attributes) {
+			if(attribute.Name.equals(attributeName))
+				return attribute;
+		}
+		return null;
+	}
 }
