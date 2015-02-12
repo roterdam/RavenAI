@@ -1,6 +1,7 @@
 package tests;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -241,6 +242,24 @@ public class AgentTests {
 		try {
 
 
+		} catch(Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testRandomLetterGenerator() {
+		
+		String newLetter = "";
+		String exceptions = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O";
+		List<String> items = Arrays.asList(exceptions.split("\\s*,\\s*"));
+		
+		try {
+				
+			newLetter = Common.GenerateRandomLetter(items);
+			
+			Assert.assertTrue(newLetter.equalsIgnoreCase("P"));
+			
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}

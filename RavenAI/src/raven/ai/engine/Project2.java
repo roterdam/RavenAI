@@ -66,6 +66,7 @@ public class Project2 {
                     
                         results.println(problem.getName() + ": " + problem.getGivenAnswer() + " " + problem.getCorrect() + " (Correct Answer: " + problem.checkAnswer("") + ")");
                     } catch(Exception ex) {
+                    	ex.printStackTrace();
                         System.out.println("Error encountered in " + set.getName() + " problem " + problem.getName());
                         results.println(problem.getName() + ": Error; no answer given.");
                     }

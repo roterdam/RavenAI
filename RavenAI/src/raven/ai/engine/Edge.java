@@ -7,6 +7,31 @@ public class Edge {
 
 	public Node NodeA;
 	public Node NodeB;
+	
+	public Edge() {
+		
+	}
+	
+	public Edge(Node nodeA, Node nodeB) {
+		this.NodeA = nodeA;
+		this.NodeB = nodeB;
+	}
+	
+	public int calculateDegreeChange() {
+		
+		if(NodeA == null || NodeB == null) return -1;
+		
+		Attribute angle1 = NodeA.findAttribute("angle");
+		Attribute angle2 = NodeB.findAttribute("angle");
+		int change = 0;
+		
+		// Return -1 if either node has no angle
+		if(angle1 == null || angle2 == null) return -1;
+		
+		change = Common.FormatAngle(Math.abs(Integer.parseInt(angle1.Value) - Integer.parseInt(angle2.Value)));
+	
+		return change;
+	}
 
 	public List<Transformation> GetTransformations() {
 

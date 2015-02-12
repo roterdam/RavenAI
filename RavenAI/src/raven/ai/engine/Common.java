@@ -9,8 +9,11 @@ import java.util.Random;
 
 public class Common {
 
+	public static final HashMap<String, Shape> Shapes = Shape.CreateShapeMap();
+
 	public static class Weighting {
 
+		public static final int Shape_Unchanged = 12;
 		public static final int Unchanged = 8;
 		public static final int Angle_Unchanged = 2;
 		public static final int Reflected = 6;
@@ -23,104 +26,151 @@ public class Common {
 		public static final int Unknown = 1;
 	}
 
-	public static int GetTransformationScore(String name, String valueA, String valueB, String shape) {
-		
-		if(name.toLowerCase().equals("angle")) {
-			if(valueA.toLowerCase().equals(valueB)) {
-				return Weighting.Angle_Unchanged;
-			}
-			else {
-				
-				int difference = Math.abs(Integer.parseInt(valueB) - Integer.parseInt(valueA));
-				
-				// Shapes the same with 0 degree differences
-				if(shape.toLowerCase().equals("circle")) {
+	public static int GetTransformationScore(String name, String valueA, String valueB, String shapeAName, String shapeBName) {
+
+		try {
+
+			if(name.toLowerCase().equals("angle")) {
+				if(valueA.toLowerCase().equals(valueB)) {
 					return Weighting.Angle_Unchanged;
 				}
-				
-				// Shapes the same with 90 degree differences
-				if(shape.toLowerCase().equals("square") || shape.toLowerCase().equals("diamond") || shape.toLowerCase().equals("plus")) {
-					if(difference == 90 || difference == 180) {
-						return Weighting.Angle_Unchanged;
+				else {
+
+					int difference = Common.FormatAngle(Math.abs(Integer.parseInt(valueB) - Integer.parseInt(valueA)));
+
+					if(shapeAName.equalsIgnoreCase(shapeBName)) {
+
+						// Same shape
+						Shape shape = Shapes.get(shapeAName);
+
+						// Angle of rotation doesn't matter, shape matches
+						if(shape.getDegreesRotationUntilSame() == difference) {
+							return Weighting.Unchanged;
+						}
+						else if(difference == 360 || difference == 0) {
+							return Weighting.Unchanged;
+						}
+						else if(difference == 180 && shape.hasHorizontalAxisSymmetry() && shape.hasVerticalAxisSymmetry()) {
+							return Weighting.Unchanged;
+						}
+						else if(difference == 180) {
+							return Weighting.Reflected;
+						}
+
 					}
-				}
-				
-				// Shapes the same with 180 degree differences
-				if(shape.toLowerCase().equals("rectangle") || shape.toLowerCase().equals("pac-man") || shape.toLowerCase().equals("arrow")) {
-					if(difference == 180) {
-						return Weighting.Angle_Unchanged;
+					else {
+
+						// Shape transformed as well
+						Shape shape1 = Shapes.get(shapeAName);
+						Shape shape2 = Shapes.get(shapeBName);
+
+						if(shape1.getRelatedShape() != null) {
+							if(shape1.getRelatedShape().getShape() == shape2 && shape1.getRelatedShape().getDegreesUntilRelation() == difference) {
+								return Weighting.Unchanged;
+							}
+						}
+
+
 					}
+
+
+
+//					// Shapes the same with 0 degree differences
+//					if(shapeBName.toLowerCase().equals("circle")) {
+//						return Weighting.Angle_Unchanged;
+//					}
+//
+//					// Shapes the same with 90 degree differences
+//					if(shapeBName.toLowerCase().equals("square") || shapeBName.toLowerCase().equals("diamond") || shapeBName.toLowerCase().equals("plus")) {
+//						if(difference == 90 || difference == 180) {
+//							return Weighting.Angle_Unchanged;
+//						}
+//					}
+//
+//					// Shapes the same with 180 degree differences
+//					if(shapeBName.toLowerCase().equals("rectangle") || shapeBName.toLowerCase().equals("pac-man") || shapeBName.toLowerCase().equals("arrow")) {
+//						if(difference == 180) {
+//							return Weighting.Angle_Unchanged;
+//						}
+//					}
 				}
 			}
-		}
-		
-		if(valueA.toLowerCase().equals(valueB) && name.toLowerCase().equals("angle")) {
-			return Weighting.Angle_Unchanged;
-		}
-		
-		if(valueA.toLowerCase().equals(valueB)) {
-			return Weighting.Unchanged;
-		}					
 
-		if(name.toLowerCase().equals("vertical-flip") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Reflected;
-		}
-
-		if(name.toLowerCase().equals("horizontal-flip") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Reflected;
-		}
-
-		if(name.toLowerCase().equals("angle") && valueA.toLowerCase() != valueB.toLowerCase()) {
-
-			int difference = Math.abs(Integer.parseInt(valueA) - Integer.parseInt(valueB));
-
-			if(difference == 45) {
-				return Weighting.Rotated;
+			if(valueA.toLowerCase().equals(valueB) && name.toLowerCase().equals("angle")) {
+				return Weighting.Angle_Unchanged;
 			}
 
-			if(difference == 90) {
-				return Weighting.Rotated;
+			if(name.toLowerCase().equals("shape") && valueA.toLowerCase().equals(valueB)) {
+				return Weighting.Shape_Unchanged;
 			}
+			
+			if(valueA.toLowerCase().equals(valueB)) {
+				return Weighting.Unchanged;
+			}					
 
-			if(difference == 180) {
+			if(name.toLowerCase().equals("vertical-flip") && valueA.toLowerCase() != valueB.toLowerCase()) {
 				return Weighting.Reflected;
 			}
 
-			if(difference == 270) {
-				return Weighting.Rotated;
+			if(name.toLowerCase().equals("horizontal-flip") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Reflected;
 			}
-		}
 
-		if(name.toLowerCase().equals("size") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Scaled;
-		}
+			if(name.toLowerCase().equals("angle") && valueA.toLowerCase() != valueB.toLowerCase()) {
 
-		if(name.toLowerCase().equals("shape") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Shape_Changed;
-		}
+				int difference = Math.abs(Integer.parseInt(valueA) - Integer.parseInt(valueB));
 
-		if(name.toLowerCase().equals("left-of") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Moved;
-		}
+				if(difference == 45) {
+					return Weighting.Rotated;
+				}
 
-		if(name.toLowerCase().equals("right-of") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Moved;
-		}
+				if(difference == 90) {
+					return Weighting.Rotated;
+				}
 
-		if(name.toLowerCase().equals("above") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Moved;		
-		}
+				if(difference == 180) {
+					return Weighting.Reflected;
+				}
 
-		if(name.toLowerCase().equals("below") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Moved;		
-		}
+				if(difference == 270) {
+					return Weighting.Rotated;
+				}
+			}
 
-		if(name.toLowerCase().equals("inside") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Moved;		
-		}
+			if(name.toLowerCase().equals("size") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Scaled;
+			}
 
-		if(name.toLowerCase().equals("overlaps") && valueA.toLowerCase() != valueB.toLowerCase()) {
-			return Weighting.Moved;		
+			if(name.toLowerCase().equals("shape") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Shape_Changed;
+			}
+
+			if(name.toLowerCase().equals("left-of") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Moved;
+			}
+
+			if(name.toLowerCase().equals("right-of") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Moved;
+			}
+
+			if(name.toLowerCase().equals("above") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Moved;		
+			}
+
+			if(name.toLowerCase().equals("below") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Moved;		
+			}
+
+			if(name.toLowerCase().equals("inside") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Moved;		
+			}
+
+			if(name.toLowerCase().equals("overlaps") && valueA.toLowerCase() != valueB.toLowerCase()) {
+				return Weighting.Moved;		
+			}
+
+		} catch(Exception ex) {
+			ex.printStackTrace();
 		}
 
 		return Weighting.Unknown;
@@ -152,7 +202,7 @@ public class Common {
 		for(Attribute node1Attribute : node1.Attributes) {
 			for(Attribute node2Attribute : node2.Attributes) {
 				if(node1Attribute.Name.toLowerCase().equals(node2Attribute.Name.toLowerCase())) {					
-					score += GetTransformationScore(node1Attribute.Name, node1Attribute.Value, node2Attribute.Value, node2.getShape());
+					score += GetTransformationScore(node1Attribute.Name, node1Attribute.Value, node2Attribute.Value, node1.getShape(), node2.getShape());
 
 					if(node1Attribute.Value.toLowerCase().equals(node2Attribute.Value.toLowerCase())) {
 						matchCount++;
@@ -180,7 +230,7 @@ public class Common {
 				int attributeScore = 0;
 				for(Attribute node2Attribute : node2.Attributes) {
 					if(vObjectAttribute.Name.toLowerCase().equals(node2Attribute.Name.toLowerCase())) {					
-						attributeScore += GetTransformationScore(vObjectAttribute.Name, vObjectAttribute.Value, node2Attribute.Value, node2.getShape());
+						attributeScore += GetTransformationScore(vObjectAttribute.Name, vObjectAttribute.Value, node2Attribute.Value, vObject.getShape(), node2.getShape());
 
 						if(vObjectAttribute.Value.toLowerCase().equals(node2Attribute.Value.toLowerCase())) {
 							matchCount++;
@@ -323,12 +373,20 @@ public class Common {
 		}
 	}
 
-	public static String GenerateRandomLetter() {
+	public static String GenerateRandomLetter(List<String> exceptions) {
 
 		Random r = new Random();
+		boolean isUnique = false;
 
 		String alphabet = "ABCDEFGHIJKLMNOP";
-		return Character.toString(alphabet.charAt(r.nextInt(alphabet.length())));    
+		String newLetter = "";
+
+		while(!isUnique) {
+			newLetter = Character.toString(alphabet.charAt(r.nextInt(alphabet.length())));
+			isUnique = !exceptions.contains(newLetter);
+		}
+
+		return newLetter;    
 	}
 
 	public static String CombineLists(List<String> list1, List<String> list2) {

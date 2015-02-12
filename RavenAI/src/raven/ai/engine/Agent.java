@@ -70,16 +70,14 @@ public class Agent {
 
 		HashMap<String, Figure> figures = CreateFigures(problem.getFigures());
 
-		HashMap<String, Shape> shapes = Shape.CreateShapeMap();
-
 		if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByOne) {
-			return SolveTwoByOne(figures, shapes);
+			return SolveTwoByOne(figures);
 		}
 
 		return "1";
 	}
 
-	private String SolveTwoByOne(HashMap<String, Figure> figures, HashMap<String, Shape> shapes) {			
+	private String SolveTwoByOne(HashMap<String, Figure> figures) {			
 
 		Figure figureA = figures.get("A");
 		Figure figureB = figures.get("B");
@@ -152,51 +150,92 @@ public class Agent {
 							Node cNode = figureC.FindNode(edge.NodeA.Name);	
 							if(cNode != null) {
 								Attribute cNodeAttribute = cNode.findAttribute(transformation.AttributeName);
-								
+
 								if(cNodeAttribute != null) {
 									expectedObject.addAttribute(transformation.AttributeName, cNodeAttribute.Value);
 								}
 							}
 						}					
 						else {
-							Node cNode = figureC.FindNode(edge.NodeA.Name);								
-							Node bNode = figureB.FindNode(cNode.Name);
+							Node cNode = figureC.FindNode(edge.NodeA.Name);	
+							Node bNode = figureB.FindNode(ABMapping.GetCorrespondingNode2Name(edge.NodeA.Name));
+							//Node bNode = figureB.FindNode(cNode.Name);
 
 							if(cNode != null && bNode != null) {
 
 								Attribute cNodeAttribute = cNode.findAttribute(transformation.AttributeName);	
 								Attribute bNodeAttribute = bNode.findAttribute(transformation.AttributeName);
 
-								AttributeType attributeType = Common.GetAttributeType(transformation.AttributeName);
-								if(attributeType == AttributeType.Additive) {
-									List<String> cNodeAttributeValues = Arrays.asList(cNodeAttribute.Value.split(","));
-									List<String> bNodeAttributeValues = Arrays.asList(bNodeAttribute.Value.split(","));																
-									expectedObject.addAttribute(transformation.AttributeName, Common.CombineLists(cNodeAttributeValues, bNodeAttributeValues));
+								if(cNodeAttribute != null && bNodeAttribute != null) {
+
+									AttributeType attributeType = Common.GetAttributeType(transformation.AttributeName);
+									if(attributeType == AttributeType.Additive) {
+										List<String> cNodeAttributeValues = Arrays.asList(cNodeAttribute.Value.split(","));
+										List<String> bNodeAttributeValues = Arrays.asList(bNodeAttribute.Value.split(","));																
+										expectedObject.addAttribute(transformation.AttributeName, Common.CombineLists(cNodeAttributeValues, bNodeAttributeValues));
+									}
+									else if(attributeType == AttributeType.Positional) {							
+										if(cNodeAttribute.Value != null && cNodeAttribute.Value != null) {
+											List<String> cNodeAttributeValues = Arrays.asList(cNodeAttribute.Value.split(","));
+											List<String> bNodeAttributeValues = Arrays.asList(bNodeAttribute.Value.split(","));	
+											expectedObject.addAttribute(transformation.AttributeName, Common.CombineLists(cNodeAttributeValues, bNodeAttributeValues));
+										}
+
+									}		
+									else if(attributeType == AttributeType.Angular) {
+										int firstAngle = Integer.parseInt(transformation.BeforeAttributeValue);
+										int secondAngle = Integer.parseInt(transformation.AfterAttributeValue);
+										int CAngle = Integer.parseInt(cNodeAttribute.Value);
+
+										if(bNode.getShape().equalsIgnoreCase(cNode.getShape())) {
+											Shape shape = Common.Shapes.get(bNode.getShape());
+											int difference = Common.FormatAngle(secondAngle - firstAngle);	
+											if(difference == 180) {
+												if(firstAngle == 0 || firstAngle == 180) {
+													if(shape.hasHorizontalAxisSymmetry()) {
+
+														// Nothing has changed, create appropriate vobjects
+														expectedObject.addAttribute(transformation.AttributeName, transformation.BeforeAttributeValue);
+														
+													}
+													else if(shape.hasVerticalAxisSymmetry()) {
+														
+														// Reflected across vertical axis
+														expectedObject.addAttribute("horizontal-flip", "yes");
+														expectedObject.addAttribute("angle", transformation.BeforeAttributeValue);
+													}
+
+												}
+												else if(firstAngle == 90 || firstAngle == 270) {
+													if(shape.hasHorizontalAxisSymmetry()) {
+
+														// Reflected across vertical axis
+														expectedObject.addAttribute("horizontal-flip", "yes");
+														expectedObject.addAttribute("angle", transformation.BeforeAttributeValue);
+													}
+													else if(shape.hasVerticalAxisSymmetry()) {
+														
+														// Nothing has changed
+														expectedObject.addAttribute(transformation.AttributeName, transformation.BeforeAttributeValue);
+													}
+
+												}
+											}
+										}
+
+										int difference = Common.FormatAngle(secondAngle - firstAngle);																									
+
+										String angle1 = String.valueOf(Common.FormatAngle(CAngle + difference));																											
+										expectedObject.addAttribute(transformation.AttributeName, angle1);
+
+										int difference2 = Common.FormatAngle(secondAngle + firstAngle);																									
+
+										String angle2 = String.valueOf(Common.FormatAngle(CAngle + difference2));
+										expectedObject.addAttribute(transformation.AttributeName, angle2);
+									}															
+
+									expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
 								}
-								else if(attributeType == AttributeType.Positional) {
-									List<String> cNodeAttributeValues = Arrays.asList(cNodeAttribute.Value.split(","));
-									List<String> bNodeAttributeValues = Arrays.asList(bNodeAttribute.Value.split(","));																
-
-									expectedObject.addAttribute(transformation.AttributeName, Common.CombineLists(cNodeAttributeValues, bNodeAttributeValues));
-								}		
-								else if(attributeType == AttributeType.Angular) {
-									int firstAngle = Integer.parseInt(transformation.BeforeAttributeValue);
-									int secondAngle = Integer.parseInt(transformation.AfterAttributeValue);
-									int CAngle = Integer.parseInt(cNodeAttribute.Value);
-
-									int difference = Common.FormatAngle(secondAngle - firstAngle);																									
-
-									String angle1 = String.valueOf(Common.FormatAngle(CAngle + difference));																											
-									expectedObject.addAttribute(transformation.AttributeName, angle1);
-
-									int difference2 = Common.FormatAngle(secondAngle + firstAngle);																									
-
-									String angle2 = String.valueOf(Common.FormatAngle(CAngle + difference2));
-									expectedObject.addAttribute(transformation.AttributeName, angle2);
-								}															
-
-								expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
-
 							}
 						}	
 					}
@@ -266,7 +305,14 @@ public class Agent {
 			int count = figureC.Nodes.size() - expectedObjects.size();
 			for(int i = 0;i < count; i++) {
 				ViableObject newObject = new ViableObject();
-				newObject.Name = Common.GenerateRandomLetter();
+				List<String> usedNodeNames = new ArrayList<String>();
+				for(ViableObject object : expectedObjects) {
+					usedNodeNames.add(object.Name);
+				}
+
+				// Generate new node name for object
+				newObject.Name = Common.GenerateRandomLetter(usedNodeNames);
+
 				for(AttributeGroup group : expectedObjects.get(0).AttributeGroups) {
 					for(Attribute att : group.Attributes) {
 						newObject.addAttribute(att.Name, att.Value);					
@@ -322,7 +368,7 @@ public class Agent {
 							if(currentAttribute != null) {
 								int score = 0;
 
-								score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, myObject.getShape());
+								score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, currentNode.getShape(), myObject.getShape());
 
 								List<String> myValues = Arrays.asList(myAttribute.Value.split(","));
 								List<String> nodeValues = Arrays.asList(currentAttribute.Value.split(","));
@@ -398,7 +444,7 @@ public class Agent {
 		return myFigures;
 	}
 
-	
+
 
 	private List<NodeMapping> CreateNodePairMapping(List<Node> nodeList1, List<Node> nodeList2) {
 

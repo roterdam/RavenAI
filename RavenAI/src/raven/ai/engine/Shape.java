@@ -54,7 +54,7 @@ public class Shape {
 			this._degreesUntilRelation = degreesUntilRelation;
 		}
 		
-		public Shape getRelatedShape() {
+		public Shape getShape() {
 			return _relatedShape;
 		}
 		
