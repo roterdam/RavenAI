@@ -7,6 +7,40 @@ public class Edge {
 
 	public Node NodeA;
 	public Node NodeB;
+	public int Score;
+
+	//	public Edge() {
+	//		
+	//	}
+
+	public Edge(Node nodeA, Node nodeB) {
+		this.NodeA = nodeA;
+		this.NodeB = nodeB;
+		this.Score = calculateScore();
+	}
+
+	private int calculateScore() {
+
+		int score = 0;
+
+		if(this.NodeA != null && this.NodeB == null) {
+
+			// Node has been deleted
+			score += Common.Weighting.Deleted;
+		}
+		else if(this.NodeA == null && this.NodeB != null) {
+
+			// Node has been added
+			score += Common.Weighting.Added;
+		}
+		else if(this.NodeA != null && this.NodeB != null) {
+
+			
+			
+		}
+
+		return score;
+	}
 
 	public List<Transformation> GetTransformations() {
 
@@ -46,9 +80,9 @@ public class Edge {
 				Transformations.add(t);
 			}
 		}
-		
+
 		List<Transformation> detailedTransforms = new ArrayList<Transformation>();
-		
+
 		for(Transformation transform : Transformations) {
 			if(transform.AttributeName.toLowerCase().equals("angle")) {
 				Rotation r = new Rotation(transform);
@@ -86,7 +120,7 @@ public class Edge {
 				detailedTransforms.add(transform);
 			}
 		}
-		
+
 		return detailedTransforms;
 
 	}
