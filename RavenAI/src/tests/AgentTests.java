@@ -105,7 +105,7 @@ public class AgentTests {
 	public void testAttributeGroups() {
 
 		try {
-			
+
 			// Arrange
 			ViableObject vObject = new ViableObject();
 
@@ -129,12 +129,12 @@ public class AgentTests {
 		// Arrange
 		int angle1 = 270;
 		int angle2 = 180;
-		
+
 		try {
-			
+
 			// Act
 			int result = Common.FormatAngle(angle1 + angle2);
-			
+
 			// Assert
 			Assert.assertEquals(result, 90);
 
@@ -149,12 +149,12 @@ public class AgentTests {
 		// Arrange
 		int angle1 = 90;
 		int angle2 = 180;
-		
+
 		try {
-			
+
 			// Act
 			int result = Common.FormatAngle(angle1 - angle2);
-			
+
 			// Assert
 			Assert.assertEquals(result, 270);
 
@@ -162,33 +162,79 @@ public class AgentTests {
 			ex.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void testRandomAngleOperationRange() {
-		
+
 		// Arrange
 		int max = 360;
 		int min = 0;
-		
+
 		try {
-			
+
 			Random rand = new Random();
-		    int randomAngle1 = rand.nextInt((max - min) + 1) + min;
-		    int randomAngle2 = rand.nextInt((max - min) + 1) + min;
-		    
-		    // Act
-		    int additionResult = Common.FormatAngle(randomAngle1 + randomAngle2);
-		    int subtractionResult = Common.FormatAngle(randomAngle1 - randomAngle2);
-		    
-		    // Assert
-		    Assert.assertTrue(additionResult < max);
-		    Assert.assertTrue(subtractionResult >= min);
-		    
+			int randomAngle1 = rand.nextInt((max - min) + 1) + min;
+			int randomAngle2 = rand.nextInt((max - min) + 1) + min;
+
+			// Act
+			int additionResult = Common.FormatAngle(randomAngle1 + randomAngle2);
+			int subtractionResult = Common.FormatAngle(randomAngle1 - randomAngle2);
+
+			// Assert
+			Assert.assertTrue(additionResult < max);
+			Assert.assertTrue(subtractionResult >= min);
+
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}
 	}
-	
+
+	@Test
+	public void testRelatedShape() {
+
+		// Arrange
+		Figure figureA = new Figure();
+		figureA.RFigure = new RavensFigure("A");			
+
+		Figure figureB = new Figure();
+		figureB.RFigure = new RavensFigure("B");
+
+		try {
+			
+			RavensObject objectX = new RavensObject("X");
+			RavensObject objectY = new RavensObject("Y");
+			RavensObject objectZ = new RavensObject("Z");
+
+			objectX.getAttributes().add(new RavensAttribute("shape", "triangle"));
+			objectX.getAttributes().add(new RavensAttribute("fill", "no"));
+			objectX.getAttributes().add(new RavensAttribute("angle", "0"));
+			objectY.getAttributes().add(new RavensAttribute("shape", "circle"));
+			objectZ.getAttributes().add(new RavensAttribute("shape", "square"));
+
+			RavensObject objectX2 = new RavensObject("Z");
+			RavensObject objectY2 = new RavensObject("Y");
+			RavensObject objectZ2 = new RavensObject("X");
+
+			objectX2.getAttributes().add(new RavensAttribute("shape", "triangle"));
+			objectX2.getAttributes().add(new RavensAttribute("fill", "no"));
+			objectX2.getAttributes().add(new RavensAttribute("angle", "0"));
+			objectY2.getAttributes().add(new RavensAttribute("shape", "circle"));
+			objectZ2.getAttributes().add(new RavensAttribute("shape", "square"));
+
+			figureA.RFigure.getObjects().add(objectX);
+			figureA.RFigure.getObjects().add(objectY);
+			figureA.RFigure.getObjects().add(objectZ);
+			figureB.RFigure.getObjects().add(objectX2);
+			figureB.RFigure.getObjects().add(objectY2);
+			figureB.RFigure.getObjects().add(objectZ2);
+			
+			
+
+		} catch(Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+
 	@Test
 	public void testRotationSymmetry() {
 

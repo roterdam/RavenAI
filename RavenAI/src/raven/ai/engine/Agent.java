@@ -70,7 +70,7 @@ public class Agent {
 
 		HashMap<String, Figure> figures = CreateFigures(problem.getFigures());
 
-		HashMap<String, Shape> shapes = CreateShapeMap();
+		HashMap<String, Shape> shapes = Shape.CreateShapeMap();
 
 		if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByOne) {
 			return SolveTwoByOne(figures, shapes);
@@ -186,7 +186,7 @@ public class Agent {
 
 									int difference = Common.FormatAngle(secondAngle - firstAngle);																									
 
-									String angle1 = String.valueOf(Common.FormatAngle(CAngle + difference));
+									String angle1 = String.valueOf(Common.FormatAngle(CAngle + difference));																											
 									expectedObject.addAttribute(transformation.AttributeName, angle1);
 
 									int difference2 = Common.FormatAngle(secondAngle + firstAngle);																									
@@ -398,50 +398,7 @@ public class Agent {
 		return myFigures;
 	}
 
-	private HashMap<String,Shape> CreateShapeMap() {
-
-		HashMap<String,Shape> shapes = new HashMap<String,Shape>();
-
-		// Create shapes
-		Shape circle = new Shape(1, true, true, 1);
-		Shape square = new Shape(4, true, true, 90);
-		Shape plus = new Shape(12, true, true, 90);
-		Shape triangle = new Shape(3, false, true, 120);
-		Shape pacman = new Shape(3, true, false, 360);
-		Shape diamond = new Shape(4, true, true, 90);
-		Shape arrow = new Shape(7, true, false, 360);
-		Shape halfarrow = new Shape(5, false, false, 360);
-		Shape rectangle = new Shape(4, true, true, 180);
-		Shape pentagon = new Shape(5, false, true, 72);
-		Shape hexagon = new Shape(6, true, true, 60);
-		Shape heptagon = new Shape(7, false, true, 360);
-		Shape septagon = new Shape(7, false, true, 360);
-		Shape octogon = new Shape(8, true, true, 45);
-
-		// Add shape relations
-		square.setRelatedShape(square.new ShapeRelation(diamond, 45));
-		diamond.setRelatedShape(diamond.new ShapeRelation(square, 45));			
-		heptagon.setRelatedShape(heptagon.new ShapeRelation(septagon, 0));
-		septagon.setRelatedShape(septagon.new ShapeRelation(heptagon, 0));
-
-		// Add shapes to shape map
-		shapes.put("circle", circle);
-		shapes.put("square", square);
-		shapes.put("plus", plus);
-		shapes.put("triangle", triangle);
-		shapes.put("Pac-Man", pacman);
-		shapes.put("diamond", diamond);
-		shapes.put("arrow", arrow);
-		shapes.put("half-arrow", halfarrow);
-		shapes.put("rectangle", rectangle);
-		shapes.put("pentagon", pentagon);
-		shapes.put("hexagon", hexagon);
-		shapes.put("heptagon", heptagon);
-		shapes.put("septagon", septagon);
-		shapes.put("octogon", octogon);
-
-		return shapes;
-	}
+	
 
 	private List<NodeMapping> CreateNodePairMapping(List<Node> nodeList1, List<Node> nodeList2) {
 
