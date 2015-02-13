@@ -18,7 +18,7 @@
 2x1 Basic Problem 16: GUESS Incorrect (Correct Answer: 3)
 2x1 Basic Problem 17: GUESS Incorrect (Correct Answer: 1)
 2x1 Basic Problem 18: GUESS Incorrect (Correct Answer: 2)
-2x1 Basic Problem 19: GUESS Incorrect (Correct Answer: 1)
+2x1 Basic Problem 19: 1 Correct (Correct Answer: 1)
 2x1 Basic Problem 20: 5 Correct (Correct Answer: 5)
 
 2x1 Challenge Problems

@@ -13,6 +13,7 @@ public class Common {
 
 		public static final int Unchanged = 8;
 		public static final int Angle_Unchanged = 2;
+		public static final int Shape_Unchanged = 10;
 		public static final int Reflected = 6;
 		public static final int Rotated = 2;
 		public static final int Scaled = 2;
@@ -56,6 +57,10 @@ public class Common {
 		
 		if(valueA.toLowerCase().equals(valueB) && name.toLowerCase().equals("angle")) {
 			return Weighting.Angle_Unchanged;
+		}
+		
+		if(name.toLowerCase().equals("shape") && valueA.toLowerCase().equalsIgnoreCase(valueB.toLowerCase())) {
+			return Weighting.Shape_Unchanged;
 		}
 		
 		if(valueA.toLowerCase().equals(valueB)) {
