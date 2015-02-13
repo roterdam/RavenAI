@@ -13,7 +13,7 @@ public class Common {
 
 	public static class Weighting {
 
-		public static final int Shape_Unchanged = 12;
+		public static final int Shape_Unchanged = 10;
 		public static final int Unchanged = 8;
 		public static final int Angle_Unchanged = 2;
 		public static final int Reflected = 6;
@@ -211,8 +211,11 @@ public class Common {
 			}
 		}
 
-		if(node1.getAttributeCount() == node2.getAttributeCount() && node1.getAttributeCount() == matchCount) {
-			score += 30;
+		if(node1.getAttributeCount() == node2.getAttributeCount()) {
+			score += 10;
+			if(node1.getAttributeCount() == matchCount) {
+				score += 20;
+			}
 		}
 
 		return score;

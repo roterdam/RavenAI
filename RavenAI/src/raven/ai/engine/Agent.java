@@ -89,12 +89,20 @@ public class Agent {
 		// DEBUG OUTPUT	
 		if(DEBUG) {
 
-			System.out.println("Node Mappings");			
+			System.out.println("A --> B Node Mappings");			
 			for(NodeMapping map : ABMapping.NodeMappings) {
 				String node1Name = map.Node1 != null ? map.Node1.Name : "";
 				String node2Name = map.Node2 != null ? map.Node2.Name : "";
 				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
 			}
+			
+			System.out.println("A --> C Node Mappings");			
+			for(NodeMapping map : ACMapping.NodeMappings) {
+				String node1Name = map.Node1 != null ? map.Node1.Name : "";
+				String node2Name = map.Node2 != null ? map.Node2.Name : "";
+				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+			}
+			
 			System.out.println("----------------------------");
 		}
 
@@ -147,7 +155,8 @@ public class Agent {
 
 							// That means transformation is unchanged
 
-							Node cNode = figureC.FindNode(edge.NodeA.Name);	
+							Node cNode = figureC.FindNode(ACMapping.GetCorrespondingNode2Name(edge.NodeA.Name));
+							//Node cNode = figureC.FindNode(edge.NodeA.Name);	
 							if(cNode != null) {
 								Attribute cNodeAttribute = cNode.findAttribute(transformation.AttributeName);
 
