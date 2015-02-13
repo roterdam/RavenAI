@@ -166,6 +166,9 @@ public class Agent {
 								Attribute cNodeAttribute = cNode.findAttribute(transformation.AttributeName);	
 								Attribute bNodeAttribute = bNode.findAttribute(transformation.AttributeName);
 
+								expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
+
+								
 								if(cNodeAttribute != null && bNodeAttribute != null) {
 
 									AttributeType attributeType = Common.GetAttributeType(transformation.AttributeName);
@@ -234,7 +237,7 @@ public class Agent {
 										expectedObject.addAttribute(transformation.AttributeName, angle2);
 									}															
 
-									expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
+									//expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
 								}
 							}
 						}	
