@@ -214,7 +214,7 @@ public class Agent {
 
 														// Reflected across vertical axis
 														expectedObject.addAttribute("horizontal-flip", "yes");
-														expectedObject.addAttribute("angle", transformation.BeforeAttributeValue);
+														expectedObject.addAttribute("angle", cNodeAttribute.Value);
 													}
 													else if(shape.hasVerticalAxisSymmetry()) {
 														
