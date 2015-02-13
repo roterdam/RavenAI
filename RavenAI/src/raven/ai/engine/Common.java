@@ -212,7 +212,7 @@ public class Common {
 		}
 
 		if(node1.getAttributeCount() == node2.getAttributeCount()) {
-			score += 10;
+			score += 5;
 			if(node1.getAttributeCount() == matchCount) {
 				score += 20;
 			}
