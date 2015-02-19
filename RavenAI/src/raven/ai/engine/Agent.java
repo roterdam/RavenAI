@@ -180,13 +180,13 @@ public class Agent {
 											int difference = Common.FormatAngle(secondAngle - firstAngle);	
 											if(difference == 180) {
 												if(firstAngle == 0 || firstAngle == 180) {
-													if(shape.hasHorizontalAxisSymmetry()) {
+													if(shape.hasVerticalAxisSymmetry()) {
 
 														// Nothing has changed, create appropriate vobjects
 														expectedObject.addAttribute(transformation.AttributeName, transformation.BeforeAttributeValue);
 
 													}
-													else if(shape.hasVerticalAxisSymmetry()) {
+													if(shape.hasHorizontalAxisSymmetry()) {
 
 														// Reflected across vertical axis
 														expectedObject.addAttribute("horizontal-flip", "yes");
@@ -195,18 +195,27 @@ public class Agent {
 
 												}
 												else if(firstAngle == 90 || firstAngle == 270) {
-													if(shape.hasHorizontalAxisSymmetry()) {
+													if(shape.hasVerticalAxisSymmetry()) {
 
 														// Reflected across vertical axis
 														expectedObject.addAttribute("horizontal-flip", "yes");
 														expectedObject.addAttribute("angle", cNodeAttribute.Value);
 													}
-													else if(shape.hasVerticalAxisSymmetry()) {
+													if(shape.hasHorizontalAxisSymmetry()) {
 
 														// Nothing has changed
 														expectedObject.addAttribute(transformation.AttributeName, transformation.BeforeAttributeValue);
 													}
 
+												}
+											}
+											else if(difference == 90) {
+												if(firstAngle == 45) {
+													
+													// Reflected across vertical axis
+													expectedObject.addAttribute("horizontal-flip", "yes");
+													expectedObject.addAttribute("angle", transformation.BeforeAttributeValue);
+													
 												}
 											}
 										}
@@ -363,7 +372,7 @@ public class Agent {
 		// Return GUESS if guessing during debug
 		if(DEBUG && allAnswers.size() > 1 && allAnswers.get(0).Score == allAnswers.get(1).Score) {
 			System.out.println("Guessing...");
-			System.out.println("Breaking tie...");
+			//System.out.println("Breaking tie...");
 
 			//			List<ViableAnswer> topAnswers = Common.GetTopTiedAnswers(allAnswers, allAnswers.get(0).Score);
 			//			for(ViableAnswer answer : topAnswers) {
@@ -447,7 +456,16 @@ public class Agent {
 							currentAnswer.Score -= 4;
 						}
 
-
+						// Award points for symmetric answers
+//						for(Node aNode : figureA.Nodes) {
+//							Node bNode = figureB.FindNode(ABMapping.GetCorrespondingNode2Name(aNode.Name));
+//							if(bNode != null) {
+//								Node cNode = figureC.FindNode(ACMapping.GetCorrespondingNode2Name(aNode.Name));
+//								if(aNode.containsAttribute("angle") && bNode.containsAttribute("angle") && cNode.containsAttribute("angle")) {
+//									
+//								}
+//							}
+//						}
 
 
 						//						for(Node aNode : figureA.Nodes) {
@@ -521,23 +539,41 @@ public class Agent {
 		List<ViableObject> expectedObjectsHorizontal = GenerateViableObjects(figureA, figureB, figureC);
 		List<ViableObject> expectedObjectsVertical = GenerateViableObjects(figureA, figureC, figureB);
 
-		//		for(Iterator<ViableAnswer> iterator = allAnswers.iterator(); iterator.hasNext();) {
-		//			ViableAnswer currentAnswer = iterator.next();
-		//
-		//			// Eliminate answers with wrong number of nodes
-		//			int expectedNodeCount = 0;
-		//			if(figureB.Nodes.size() == figureA.Nodes.size()) {
-		//				expectedNodeCount = figureC.Nodes.size();
-		//			}
-		//			if(figureA.Nodes.size() == figureC.Nodes.size()) {
-		//				expectedNodeCount = figureB.Nodes.size();
-		//			}
-		//
-		//			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
-		//				currentAnswer.Incompatible = true;
-		//			}		
-		//
-		//		}
+				for(Iterator<ViableAnswer> iterator = allAnswersHorizontal.iterator(); iterator.hasNext();) {
+					ViableAnswer currentAnswer = iterator.next();
+		
+					// Eliminate answers with wrong number of nodes
+					int expectedNodeCount = 0;
+					if(figureB.Nodes.size() == figureA.Nodes.size()) {
+						expectedNodeCount = figureC.Nodes.size();
+					}
+					if(figureA.Nodes.size() == figureC.Nodes.size()) {
+						expectedNodeCount = figureB.Nodes.size();
+					}
+		
+					if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+						currentAnswer.Incompatible = true;
+					}		
+		
+				}
+				
+				for(Iterator<ViableAnswer> iterator = allAnswersHorizontal.iterator(); iterator.hasNext();) {
+					ViableAnswer currentAnswer = iterator.next();
+		
+					// Eliminate answers with wrong number of nodes
+					int expectedNodeCount = 0;
+					if(figureB.Nodes.size() == figureA.Nodes.size()) {
+						expectedNodeCount = figureC.Nodes.size();
+					}
+					if(figureA.Nodes.size() == figureC.Nodes.size()) {
+						expectedNodeCount = figureB.Nodes.size();
+					}
+		
+					if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+						currentAnswer.Incompatible = true;
+					}		
+		
+				}
 
 		// Make sure proper ratio of objects is present (add extras if necessary)
 		//		if(figureA.Nodes.size() == figureB.Nodes.size() && figureC.Nodes.size() != expectedObjects.size()) {
@@ -701,7 +737,7 @@ public class Agent {
 			for(int i = 0; i < nodeList1Count; i++) {
 				for(int j = 0; j < nodeList2Count; j++) {
 
-					if(mapMatrix[i][j] > maxScore) {
+					if(mapMatrix[i][j] >= maxScore) {
 						maxScore = mapMatrix[i][j];
 						maxX = i;
 						maxY = j;					
@@ -716,13 +752,13 @@ public class Agent {
 			map.Score = maxScore;
 			mappings.add(map);
 
-			// Zero out row and column to prevent duplicate pairings
+			// Cancel out row and column to prevent duplicate pairings
 			for(int y = 0; y < nodeList1Count; y++) {
-				mapMatrix[y][maxY] = 0;
+				mapMatrix[y][maxY] = -1;
 			}
 
 			for(int z = 0; z < nodeList2Count; z++) {
-				mapMatrix[maxX][z] = 0;
+				mapMatrix[maxX][z] = -1;
 			}
 
 		}

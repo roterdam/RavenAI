@@ -71,17 +71,17 @@ public class Shape {
 		Shape circle = new Shape(1, true, true, 1);
 		Shape square = new Shape(4, true, true, 90);
 		Shape plus = new Shape(12, true, true, 90);
-		Shape triangle = new Shape(3, false, true, 120);
+		Shape triangle = new Shape(3, true, false, 120);
 		Shape righttriangle = new Shape(3, false, false, 360);
-		Shape pacman = new Shape(3, true, false, 360);
+		Shape pacman = new Shape(3, false, true, 360);
 		Shape diamond = new Shape(4, true, true, 90);
-		Shape arrow = new Shape(7, true, false, 360);
+		Shape arrow = new Shape(7, false, true, 360);
 		Shape halfarrow = new Shape(5, false, false, 360);
 		Shape rectangle = new Shape(4, true, true, 180);
-		Shape pentagon = new Shape(5, false, true, 72);
+		Shape pentagon = new Shape(5, true, false, 72);
 		Shape hexagon = new Shape(6, true, true, 60);
-		Shape heptagon = new Shape(7, false, true, 360);
-		Shape septagon = new Shape(7, false, true, 360);
+		Shape heptagon = new Shape(7, true, false, 360);
+		Shape septagon = new Shape(7, true, false, 360);
 		Shape octagon = new Shape(8, true, true, 45);
 
 		// Add shape relations
