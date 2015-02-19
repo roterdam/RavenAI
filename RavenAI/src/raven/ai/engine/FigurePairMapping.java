@@ -11,10 +11,10 @@ public class FigurePairMapping {
 
 	public String GetCorrespondingNode1Name(String node2Name) {
 		for(NodeMapping map : NodeMappings) {
+			if(map.Node1 == null || map.Node2 == null) {
+				return null;
+			}
 			if(map.Node2.Name.toLowerCase().equals(node2Name.toLowerCase())) {
-				if(map.Node1 == null) {
-					return null;
-				}
 				return map.Node1.Name;
 			}
 		}
@@ -23,10 +23,10 @@ public class FigurePairMapping {
 
 	public String GetCorrespondingNode2Name(String node1Name) {
 		for(NodeMapping map : NodeMappings) {
+			if(map.Node1 == null || map.Node2 == null) {
+				return null;
+			}
 			if(map.Node1.Name.toLowerCase().equals(node1Name.toLowerCase())) {
-				if(map.Node2 == null) {
-					return null;
-				}
 				return map.Node2.Name;
 			}
 		}

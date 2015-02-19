@@ -394,6 +394,34 @@ public class Common {
 
 		return attributeCount;
 	}
+	
+	public static int GetAttributeCountByType(Figure figure, AttributeType type) {
+		
+		int attributeCount = 0;
+
+		for(RavensObject rObject : figure.RFigure.getObjects()) {
+			for(RavensAttribute rAttribute : rObject.getAttributes()) {
+				if(GetAttributeType(rAttribute.getName()) == type) {
+					attributeCount += 1;
+				}
+			}
+		}
+		
+		return attributeCount;
+	}
+	
+	public static List<ViableAnswer> GetTopTiedAnswers(List<ViableAnswer> answers, int topScore) {
+		
+		List<ViableAnswer> filteredAnswers = new ArrayList<ViableAnswer>();
+		
+		for(ViableAnswer answer : answers) {
+			if(answer.Score == topScore) {
+				filteredAnswers.add(answer);
+			}
+		}
+		
+		return filteredAnswers;
+	}
 
 	public static int FormatAngle(int angle) {
 		int outputAngle = angle % 360;

@@ -98,8 +98,6 @@ public class Agent {
 
 		List<Edge> edges = ABMapping.ToEdges();
 
-
-
 		for(Edge edge : edges) {
 
 			ViableObject expectedObject = new ViableObject();			
@@ -125,6 +123,21 @@ public class Agent {
 
 								if(cNodeAttribute != null) {
 									expectedObject.addAttribute(transformation.AttributeName, cNodeAttribute.Value);
+								}
+								else {
+									//									if(transformation.AttributeName.equalsIgnoreCase("left-of") || transformation.AttributeName.equalsIgnoreCase("right-of") ||
+									//											transformation.AttributeName.equalsIgnoreCase("above") || transformation.AttributeName.equalsIgnoreCase("behind") ||
+									//											transformation.AttributeName.equalsIgnoreCase("below") || transformation.AttributeName.equalsIgnoreCase("inside") ||
+									//											transformation.AttributeName.equalsIgnoreCase("overlaps")) {
+									if(Common.GetAttributeType(transformation.AttributeName) == AttributeType.Positional) {
+
+										for(Attribute cAttribute : cNode.Attributes) {
+											if(Common.GetAttributeType(cAttribute.Name) == AttributeType.Positional) {
+												expectedObject.addAttribute(cAttribute.Name, cAttribute.Value);
+											}
+										}
+
+									}
 								}
 							}
 						}					
@@ -346,9 +359,27 @@ public class Agent {
 			System.out.println("");
 		}
 
+
 		// Return GUESS if guessing during debug
 		if(DEBUG && allAnswers.size() > 1 && allAnswers.get(0).Score == allAnswers.get(1).Score) {
 			System.out.println("Guessing...");
+			System.out.println("Breaking tie...");
+
+			//			List<ViableAnswer> topAnswers = Common.GetTopTiedAnswers(allAnswers, allAnswers.get(0).Score);
+			//			for(ViableAnswer answer : topAnswers) {
+			//				answer.Score += answer.CMatchScore;
+			//			}
+			//			
+			//			Collections.sort(topAnswers);
+			//			
+			//			System.out.println("NEW POSSIBLE ANSWERS");
+			//			for(ViableAnswer pAnswer : topAnswers) {
+			//				if(!pAnswer.Incompatible) {
+			//					System.out.println(pAnswer.AnswerFigure.getName() + " : " + pAnswer.Score);
+			//				}
+			//			}
+			//			
+			//			return topAnswers.get(0).AnswerFigure.getName();
 			return "GUESS";
 		}
 
@@ -364,21 +395,33 @@ public class Agent {
 				Figure figureB = figures.get("B");
 				Figure figureC = figures.get("C");
 
+				FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB, true);
+				FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC, false);
 				FigurePairMapping CNumMapping = CreateFigurePairMapping(figureC, figures.get(currentAnswer.AnswerFigure.getName()), true);
 
 				if(CNumMapping != null) {
 
-					// DEBUG OUTPUT		
-					//				if(DEBUG) {
-					//					System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
-					//					for(NodeMapping map : CNumMapping.NodeMappings) {
-					//						String node1Name = map.Node1 != null ? map.Node1.Name : "";
-					//						String node2Name = map.Node2 != null ? map.Node2.Name : "";
-					//						System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-					//					}
+//					for(NodeMapping map : CNumMapping.NodeMappings) {
+//						if(map.Node1 != null && map.Node2 != null) {
+//							if(Common.GetAttributeCount(map.Node1) == Common.GetAttributeCount(map.Node2)) {
+//								//currentAnswer.Score += 1;
+//							}
+//						}
+//						//currentAnswer.CMatchScore += map.Score;
+//					}
+					
 
-					//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
-					//				}
+					// DEBUG OUTPUT		
+//					if(DEBUG) {
+//						System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
+//						for(NodeMapping map : CNumMapping.NodeMappings) {							
+//							String node1Name = map.Node1 != null ? map.Node1.Name : "";
+//							String node2Name = map.Node2 != null ? map.Node2.Name : "";
+//							System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+//						}
+//
+//						//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
+//					}
 
 					List<NodeMapping> expectedObjectMappings = CreateNodeViableObjectMapping(expectedObjects, currentAnswer.AnswerFigure.Nodes);
 
@@ -386,7 +429,8 @@ public class Agent {
 
 						Node currentNode = null;
 
-						for(NodeMapping map : expectedObjectMappings) {
+						for(NodeMapping map : expectedObjectMappings) {							
+
 							if(map.Node1 != null) {
 								if(map.Node1.Name.toLowerCase().equals(myObject.Name.toLowerCase())) {
 									currentNode = map.Node2;
@@ -399,9 +443,32 @@ public class Agent {
 						}
 
 						// Make sure attribute ratios match
-						if(Common.GetAttributeCount(figureA) + Common.GetAttributeCount(figureB) != Common.GetAttributeCount(figureC) + Common.GetAttributeCount(currentAnswer.AnswerFigure)) {
+						if(Common.GetAttributeCount(figureA) / Common.GetAttributeCount(figureB) != Common.GetAttributeCount(figureC) / Common.GetAttributeCount(currentAnswer.AnswerFigure)) {
 							currentAnswer.Score -= 4;
 						}
+
+
+
+
+						//						for(Node aNode : figureA.Nodes) {
+						//							Node bNode = figureB.FindNode(ABMapping.GetCorrespondingNode2Name(aNode.Name));
+						//							if(bNode != null) {
+						//								if(Common.GetAttributeCount(bNode) != 0) {
+						//									double ABRatio = Common.GetAttributeCount(aNode) / Common.GetAttributeCount(bNode);
+						//									Node cNode = figureC.FindNode(ACMapping.GetCorrespondingNode2Name(aNode.Name));
+						//									for(NodeMapping map : expectedObjectMappings) {
+						//										if(cNode.Name.equalsIgnoreCase(map.Node1.Name)) {
+						//											if(Common.GetAttributeCount(map.Node1) != 0) {
+						//												double CDRatio = Common.GetAttributeCount(cNode) / Common.GetAttributeCount(map.Node1);
+						//												if(ABRatio == CDRatio) {
+						//													currentAnswer.Score += 1;
+						//												}
+						//											}
+						//										}
+						//									}
+						//								}
+						//							}
+						//						}
 
 						if(myObject.AttributeGroups != null) {
 							for(AttributeGroup group : myObject.AttributeGroups) {
@@ -500,33 +567,33 @@ public class Agent {
 		// Sort answers by score
 		//Collections.sort(allAnswersHorizontal);
 		//Collections.sort(allAnswersVertical);
-		
+
 		HashMap<String, Integer> scoreList = new HashMap<String, Integer>();
-		
+
 		for(ViableAnswer answer : allAnswersHorizontal) {
 			scoreList.put(answer.AnswerFigure.getName(), answer.Score);
 		}
-		
+
 		for(ViableAnswer answer : allAnswersVertical) {
 			if(scoreList.containsKey(answer.AnswerFigure.getName())) {
-				
+
 				// Add scores together
 				int newScore = answer.Score;
 				newScore += scoreList.get(answer.AnswerFigure.getName());
 				scoreList.put(answer.AnswerFigure.getName(), newScore);
 			}
 			else {
-				
+
 				// Append new score
 				scoreList.put(answer.AnswerFigure.getName(), answer.Score);
 			}
 		}
-		
+
 		int maxScore = 0;
 		String bestAnswer = "-1";
-		
+
 		Iterator it = scoreList.entrySet().iterator();
-		
+
 		if(DEBUG) {
 			System.out.println("POSSIBLE ANSWERS");
 		}
@@ -539,17 +606,17 @@ public class Agent {
 				maxScore = score;
 				bestAnswer = (String)pairs.getKey();
 			}
-			
+
 			if(DEBUG) {							
 				System.out.println((String)pairs.getKey() + " : " + (Integer)pairs.getValue());					
 			}
 
 		}
-		
+
 		if(DEBUG) {
 			System.out.println("");
 		}
-		
+
 
 		//		if(DEBUG) {
 		//			System.out.println("POSSIBLE ANSWERS");

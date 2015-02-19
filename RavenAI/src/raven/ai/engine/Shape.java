@@ -82,7 +82,7 @@ public class Shape {
 		Shape hexagon = new Shape(6, true, true, 60);
 		Shape heptagon = new Shape(7, false, true, 360);
 		Shape septagon = new Shape(7, false, true, 360);
-		Shape octogon = new Shape(8, true, true, 45);
+		Shape octagon = new Shape(8, true, true, 45);
 
 		// Add shape relations
 		square.setRelatedShape(square.new ShapeRelation(diamond, 45));
@@ -105,7 +105,7 @@ public class Shape {
 		shapes.put("hexagon", hexagon);
 		shapes.put("heptagon", heptagon);
 		shapes.put("septagon", septagon);
-		shapes.put("octogon", octogon);
+		shapes.put("octagon", octagon);
 
 		return shapes;
 	}

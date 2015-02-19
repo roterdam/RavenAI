@@ -3,6 +3,7 @@ package raven.ai.engine;
 public class ViableAnswer implements Comparable {
 	public Figure AnswerFigure;
 	public int Score;
+	public int CMatchScore;
 	public boolean Incompatible = false;
 	
 	public ViableAnswer(Figure answer, int score) {
