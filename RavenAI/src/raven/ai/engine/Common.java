@@ -1,6 +1,7 @@
 package raven.ai.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -193,7 +194,7 @@ public class Common {
 
 	}
 
-	public static int GetNodeSimilarityScore(Node node1, Node node2) {
+	public static int GetNodeSimilarityScore(Node node1, Node node2, boolean isTransformation) {
 
 		int score = 0;
 
@@ -201,23 +202,82 @@ public class Common {
 
 		for(Attribute node1Attribute : node1.Attributes) {
 			for(Attribute node2Attribute : node2.Attributes) {
-				if(node1Attribute.Name.toLowerCase().equals(node2Attribute.Name.toLowerCase())) {					
-					score += GetTransformationScore(node1Attribute.Name, node1Attribute.Value, node2Attribute.Value, node1.getShape(), node2.getShape());
+				if(node1Attribute.Name.toLowerCase().equals(node2Attribute.Name.toLowerCase())) {	
+					
+					if(isTransformation) {
+						score += GetTransformationScore(node1Attribute.Name, node1Attribute.Value, node2Attribute.Value, node1.getShape(), node2.getShape());
+					}
+					else {
+						score += GetMatchScore(node1, node2);
+					}
 
 					if(node1Attribute.Value.toLowerCase().equals(node2Attribute.Value.toLowerCase())) {
-						matchCount++;
+						//matchCount++;
 					}
 				}
 			}
 		}
 
 		if(node1.getAttributeCount() == node2.getAttributeCount()) {
-			score += 5;
+			//score += 5;
 			if(node1.getAttributeCount() == matchCount) {
-				score += 20;
+				//score += 20;
 			}
 		}
 
+		return score;
+	}
+	
+	public static int GetMatchScore(Node node1, Node node2) {
+		int score = 0;
+
+		//int matchCount = 0;
+
+		for(Attribute node1Attribute : node1.Attributes) {
+			for(Attribute node2Attribute : node2.Attributes) {
+				if(node1Attribute.Name.toLowerCase().equals(node2Attribute.Name.toLowerCase())) {	
+					
+					// Attributes match
+					if(node1Attribute.Value.equalsIgnoreCase(node2Attribute.Value)) {
+																
+						if(node1Attribute.Name.equalsIgnoreCase("shape")) {
+							// Same shape 	
+							score += 19;
+						}											
+						else if(node1Attribute.Name.equalsIgnoreCase("size")) {
+							// Same size
+							score += 15;
+						}
+						else if(node1Attribute.Name.equalsIgnoreCase("angle")) {
+							// Same angle
+							score += 10;
+						}
+						else if(node1Attribute.Name.equalsIgnoreCase("fill")) {
+							// Same fill
+							score += 8;
+						}
+						else if(node1Attribute.Name.equalsIgnoreCase("above") || node1Attribute.Name.equalsIgnoreCase("below") || 
+								node1Attribute.Name.equalsIgnoreCase("left-of") || node1Attribute.Name.equalsIgnoreCase("right-of") ||
+								node1Attribute.Name.equalsIgnoreCase("inside") || node1Attribute.Name.equalsIgnoreCase("overlays")) {
+							
+							// Same position attribute count
+							List<String> node1AttValues = Arrays.asList(node1Attribute.Value.split(","));
+							List<String> node2AttValues = Arrays.asList(node2Attribute.Value.split(","));
+							
+							if(node1AttValues.size() == node2AttValues.size()) {
+								score += 6;
+							}
+						}
+						else {
+							score += 1;
+						}
+						
+					}
+										
+				}
+			}
+		}
+		
 		return score;
 	}
 

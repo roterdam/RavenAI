@@ -73,6 +73,9 @@ public class Agent {
 		if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByOne) {
 			return SolveTwoByOne(figures);
 		}
+//		else if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByTwo) {
+//			return SolveTwoByTwo(figures);
+//		}
 
 		return "1";
 	}
@@ -83,38 +86,20 @@ public class Agent {
 		Figure figureB = figures.get("B");
 		Figure figureC = figures.get("C");
 
-		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB);
-		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC);
+		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB, true);
+		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC, false);
 
 		// DEBUG OUTPUT	
 		if(DEBUG) {
 
-			System.out.println("A --> B Node Mappings");			
-			for(NodeMapping map : ABMapping.NodeMappings) {
-				String node1Name = map.Node1 != null ? map.Node1.Name : "";
-				String node2Name = map.Node2 != null ? map.Node2.Name : "";
-				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-			}
-			
-			System.out.println("A --> C Node Mappings");			
-			for(NodeMapping map : ACMapping.NodeMappings) {
-				String node1Name = map.Node1 != null ? map.Node1.Name : "";
-				String node2Name = map.Node2 != null ? map.Node2.Name : "";
-				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-			}
+			ABMapping.PrintMappingInfo();
+			ACMapping.PrintMappingInfo();
 			
 			System.out.println("----------------------------");
 		}
 
-		List<Edge> edges = new ArrayList<Edge>();	
-
-		for(NodeMapping map : ABMapping.NodeMappings) {
-			Edge edge = new Edge();
-			edge.NodeA = map.Node1;
-			edge.NodeB = map.Node2;
-			edges.add(edge);
-		}		
-
+		List<Edge> edges = ABMapping.ToEdges();
+		
 		List<ViableAnswer> allAnswers = Common.GetAnswerFigures(figures);	
 
 		List<ViableObject> expectedObjects = new ArrayList<ViableObject>();
@@ -135,7 +120,7 @@ public class Agent {
 				currentAnswer.Incompatible = true;
 			}		
 
-		}			
+		}
 
 		for(Edge edge : edges) {
 
@@ -337,7 +322,7 @@ public class Agent {
 		for(ViableAnswer currentAnswer : allAnswers) {
 			if(!currentAnswer.Incompatible) {		
 
-				FigurePairMapping CNumMapping = CreateFigurePairMapping(figures.get("C"), figures.get(currentAnswer.AnswerFigure.getName()));
+				FigurePairMapping CNumMapping = CreateFigurePairMapping(figures.get("C"), figures.get(currentAnswer.AnswerFigure.getName()), true);
 
 				// DEBUG OUTPUT		
 				//				if(DEBUG) {
@@ -427,6 +412,61 @@ public class Agent {
 
 		return allAnswers.get(0).AnswerFigure.getName();
 	}
+	
+	private String SolveTwoByTwo(HashMap<String, Figure> figures) {		
+		
+		Figure figureA = figures.get("A");
+		Figure figureB = figures.get("B");
+		Figure figureC = figures.get("C");
+
+		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB, true);
+		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC, false);
+
+		// DEBUG OUTPUT	
+		if(DEBUG) {
+
+			System.out.println("A --> B Node Mappings");			
+			for(NodeMapping map : ABMapping.NodeMappings) {
+				String node1Name = map.Node1 != null ? map.Node1.Name : "";
+				String node2Name = map.Node2 != null ? map.Node2.Name : "";
+				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+			}
+			
+			System.out.println("A --> C Node Mappings");			
+			for(NodeMapping map : ACMapping.NodeMappings) {
+				String node1Name = map.Node1 != null ? map.Node1.Name : "";
+				String node2Name = map.Node2 != null ? map.Node2.Name : "";
+				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+			}
+			
+			System.out.println("----------------------------");
+		}
+
+		List<Edge> edges = ABMapping.ToEdges();
+		
+		List<ViableAnswer> allAnswers = Common.GetAnswerFigures(figures);	
+
+		List<ViableObject> expectedObjects = new ArrayList<ViableObject>();
+
+//		for(Iterator<ViableAnswer> iterator = allAnswers.iterator(); iterator.hasNext();) {
+//			ViableAnswer currentAnswer = iterator.next();
+//
+//			// Eliminate answers with wrong number of nodes
+//			int expectedNodeCount = 0;
+//			if(figureB.Nodes.size() == figureA.Nodes.size()) {
+//				expectedNodeCount = figureC.Nodes.size();
+//			}
+//			if(figureA.Nodes.size() == figureC.Nodes.size()) {
+//				expectedNodeCount = figureB.Nodes.size();
+//			}
+//
+//			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+//				currentAnswer.Incompatible = true;
+//			}		
+//
+//		}	
+		return "";
+	}
 
 	private HashMap<String, Figure> CreateFigures(HashMap<String, RavensFigure> figures) {
 
@@ -458,7 +498,7 @@ public class Agent {
 
 
 
-	private List<NodeMapping> CreateNodePairMapping(List<Node> nodeList1, List<Node> nodeList2) {
+	private List<NodeMapping> CreateNodePairMapping(List<Node> nodeList1, List<Node> nodeList2, boolean isTransformation) {
 
 		List<NodeMapping> mappings = new ArrayList<NodeMapping>();
 
@@ -472,7 +512,7 @@ public class Agent {
 				Node node1 = nodeList1.get(i);
 				Node node2 = nodeList2.get(j);
 
-				mapMatrix[i][j] = Common.GetNodeSimilarityScore(node1, node2);
+				mapMatrix[i][j] = Common.GetNodeSimilarityScore(node1, node2, isTransformation);
 			}
 		}
 
@@ -654,12 +694,12 @@ public class Agent {
 		return mappings;
 	}
 
-	private FigurePairMapping CreateFigurePairMapping(Figure figure1, Figure figure2) {
+	private FigurePairMapping CreateFigurePairMapping(Figure figure1, Figure figure2, boolean isTransformation) {
 
 		FigurePairMapping figureMapping = new FigurePairMapping();
 		figureMapping.Figure1 = figure1;
 		figureMapping.Figure2 = figure2;
-		figureMapping.NodeMappings = CreateNodePairMapping(figure1.Nodes, figure2.Nodes);	
+		figureMapping.NodeMappings = CreateNodePairMapping(figure1.Nodes, figure2.Nodes, isTransformation);	
 
 		return figureMapping;
 
