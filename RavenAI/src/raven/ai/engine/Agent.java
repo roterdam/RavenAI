@@ -211,11 +211,11 @@ public class Agent {
 											}
 											else if(difference == 90) {
 												if(firstAngle == 45) {
-													
+
 													// Reflected across vertical axis
 													expectedObject.addAttribute("horizontal-flip", "yes");
 													expectedObject.addAttribute("angle", transformation.BeforeAttributeValue);
-													
+
 												}
 											}
 										}
@@ -410,29 +410,97 @@ public class Agent {
 
 				if(CNumMapping != null) {
 
-//					for(NodeMapping map : CNumMapping.NodeMappings) {
-//						if(map.Node1 != null && map.Node2 != null) {
-//							if(Common.GetAttributeCount(map.Node1) == Common.GetAttributeCount(map.Node2)) {
-//								//currentAnswer.Score += 1;
-//							}
-//						}
-//						//currentAnswer.CMatchScore += map.Score;
-//					}
-					
+					//					for(NodeMapping map : CNumMapping.NodeMappings) {
+					//						if(map.Node1 != null && map.Node2 != null) {
+					//							if(Common.GetAttributeCount(map.Node1) == Common.GetAttributeCount(map.Node2)) {
+					//								//currentAnswer.Score += 1;
+					//							}
+					//						}
+					//						//currentAnswer.CMatchScore += map.Score;
+					//					}
+
 
 					// DEBUG OUTPUT		
-//					if(DEBUG) {
-//						System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
-//						for(NodeMapping map : CNumMapping.NodeMappings) {							
-//							String node1Name = map.Node1 != null ? map.Node1.Name : "";
-//							String node2Name = map.Node2 != null ? map.Node2.Name : "";
-//							System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-//						}
-//
-//						//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
-//					}
+					//					if(DEBUG) {
+					//						System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
+					//						for(NodeMapping map : CNumMapping.NodeMappings) {							
+					//							String node1Name = map.Node1 != null ? map.Node1.Name : "";
+					//							String node2Name = map.Node2 != null ? map.Node2.Name : "";
+					//							System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+					//						}
+					//
+					//						//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
+					//					}
 
 					List<NodeMapping> expectedObjectMappings = CreateNodeViableObjectMapping(expectedObjects, currentAnswer.AnswerFigure.Nodes);
+
+					// Make sure attribute ratios match
+					if(Common.GetAttributeCount(figureA) / Common.GetAttributeCount(figureB) != Common.GetAttributeCount(figureC) / Common.GetAttributeCount(currentAnswer.AnswerFigure)) {
+						currentAnswer.Score -= 4;
+					}
+
+					// Award points for symmetric answers
+					for(Node aNode : figureA.Nodes) {
+						Node bNode = figureB.FindNode(ABMapping.GetCorrespondingNode2Name(aNode.Name));
+						if(bNode != null) {
+							Node cNode = figureC.FindNode(ACMapping.GetCorrespondingNode2Name(aNode.Name));
+							if(cNode != null) {
+								if(aNode.containsAttribute("angle") && bNode.containsAttribute("angle") && cNode.containsAttribute("angle")) {
+									List<Integer> angles = new ArrayList<Integer>();
+									angles.add(Integer.parseInt(aNode.findAttribute("angle").Value));
+									angles.add(Integer.parseInt(bNode.findAttribute("angle").Value));
+									angles.add(Integer.parseInt(cNode.findAttribute("angle").Value));
+
+									// Make sure angles are all different
+									if(angles.get(0) != angles.get(1) && angles.get(0) != angles.get(2) && angles.get(1) != angles.get(2)) {
+
+										int minAngle = 360;
+										int symmetricAngle = -1;									
+
+										// minAngle should be either 0 or 45
+										for(Integer angle : angles) {											
+
+											if(angle < minAngle) {
+												minAngle = angle;
+											}
+										}
+
+										// If smallest angle is 90, then we should be looking for an angle of 0
+										if(minAngle == 90) {
+											symmetricAngle = 0;
+										}
+										else {
+
+											// Calculate symmetric angle needed
+											for(int i = 0; i < 4; i++) {
+												if(!angles.contains(minAngle + (i*90))) {
+													symmetricAngle = minAngle + (i*90);
+												}
+											}
+										}
+
+										angles.add(symmetricAngle);
+
+										// Make sure angles are all in 90 degree increments
+										if((angles.contains(0) && angles.contains(90) && angles.contains(180) && angles.contains(270)) ||
+												(angles.contains(45) && angles.contains(135) && angles.contains(225) && angles.contains(315))) {
+
+											String dNodeName = CNumMapping.GetCorrespondingNode2Name(cNode.Name);
+
+											for(Node n : currentAnswer.AnswerFigure.Nodes) {
+												if(n.Name.equalsIgnoreCase(dNodeName)) {
+													if(n.containsAttribute("angle") && n.findAttribute("angle").Value.equalsIgnoreCase(String.valueOf(symmetricAngle))) {
+														currentAnswer.Score += 7;
+														System.out.println("SYMMETRIC BONUS GIVEN");
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 
 					for(ViableObject myObject : expectedObjects) {
 
@@ -451,21 +519,7 @@ public class Agent {
 							currentNode = myObject.getCorrespondingNode(currentAnswer.AnswerFigure);
 						}
 
-						// Make sure attribute ratios match
-						if(Common.GetAttributeCount(figureA) / Common.GetAttributeCount(figureB) != Common.GetAttributeCount(figureC) / Common.GetAttributeCount(currentAnswer.AnswerFigure)) {
-							currentAnswer.Score -= 4;
-						}
 
-						// Award points for symmetric answers
-//						for(Node aNode : figureA.Nodes) {
-//							Node bNode = figureB.FindNode(ABMapping.GetCorrespondingNode2Name(aNode.Name));
-//							if(bNode != null) {
-//								Node cNode = figureC.FindNode(ACMapping.GetCorrespondingNode2Name(aNode.Name));
-//								if(aNode.containsAttribute("angle") && bNode.containsAttribute("angle") && cNode.containsAttribute("angle")) {
-//									
-//								}
-//							}
-//						}
 
 
 						//						for(Node aNode : figureA.Nodes) {
@@ -539,41 +593,41 @@ public class Agent {
 		List<ViableObject> expectedObjectsHorizontal = GenerateViableObjects(figureA, figureB, figureC);
 		List<ViableObject> expectedObjectsVertical = GenerateViableObjects(figureA, figureC, figureB);
 
-				for(Iterator<ViableAnswer> iterator = allAnswersHorizontal.iterator(); iterator.hasNext();) {
-					ViableAnswer currentAnswer = iterator.next();
-		
-					// Eliminate answers with wrong number of nodes
-					int expectedNodeCount = 0;
-					if(figureB.Nodes.size() == figureA.Nodes.size()) {
-						expectedNodeCount = figureC.Nodes.size();
-					}
-					if(figureA.Nodes.size() == figureC.Nodes.size()) {
-						expectedNodeCount = figureB.Nodes.size();
-					}
-		
-					if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
-						currentAnswer.Incompatible = true;
-					}		
-		
-				}
-				
-				for(Iterator<ViableAnswer> iterator = allAnswersHorizontal.iterator(); iterator.hasNext();) {
-					ViableAnswer currentAnswer = iterator.next();
-		
-					// Eliminate answers with wrong number of nodes
-					int expectedNodeCount = 0;
-					if(figureB.Nodes.size() == figureA.Nodes.size()) {
-						expectedNodeCount = figureC.Nodes.size();
-					}
-					if(figureA.Nodes.size() == figureC.Nodes.size()) {
-						expectedNodeCount = figureB.Nodes.size();
-					}
-		
-					if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
-						currentAnswer.Incompatible = true;
-					}		
-		
-				}
+		for(Iterator<ViableAnswer> iterator = allAnswersHorizontal.iterator(); iterator.hasNext();) {
+			ViableAnswer currentAnswer = iterator.next();
+
+			// Eliminate answers with wrong number of nodes
+			int expectedNodeCount = 0;
+			if(figureB.Nodes.size() == figureA.Nodes.size()) {
+				expectedNodeCount = figureC.Nodes.size();
+			}
+			if(figureA.Nodes.size() == figureC.Nodes.size()) {
+				expectedNodeCount = figureB.Nodes.size();
+			}
+
+			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+				currentAnswer.Incompatible = true;
+			}		
+
+		}
+
+		for(Iterator<ViableAnswer> iterator = allAnswersHorizontal.iterator(); iterator.hasNext();) {
+			ViableAnswer currentAnswer = iterator.next();
+
+			// Eliminate answers with wrong number of nodes
+			int expectedNodeCount = 0;
+			if(figureB.Nodes.size() == figureA.Nodes.size()) {
+				expectedNodeCount = figureC.Nodes.size();
+			}
+			if(figureA.Nodes.size() == figureC.Nodes.size()) {
+				expectedNodeCount = figureB.Nodes.size();
+			}
+
+			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+				currentAnswer.Incompatible = true;
+			}		
+
+		}
 
 		// Make sure proper ratio of objects is present (add extras if necessary)
 		//		if(figureA.Nodes.size() == figureB.Nodes.size() && figureC.Nodes.size() != expectedObjects.size()) {
