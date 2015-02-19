@@ -72,6 +72,7 @@ public class Shape {
 		Shape square = new Shape(4, true, true, 90);
 		Shape plus = new Shape(12, true, true, 90);
 		Shape triangle = new Shape(3, false, true, 120);
+		Shape righttriangle = new Shape(3, false, false, 360);
 		Shape pacman = new Shape(3, true, false, 360);
 		Shape diamond = new Shape(4, true, true, 90);
 		Shape arrow = new Shape(7, true, false, 360);
@@ -94,6 +95,7 @@ public class Shape {
 		shapes.put("square", square);
 		shapes.put("plus", plus);
 		shapes.put("triangle", triangle);
+		shapes.put("right-triangle", righttriangle);
 		shapes.put("Pac-Man", pacman);
 		shapes.put("diamond", diamond);
 		shapes.put("arrow", arrow);

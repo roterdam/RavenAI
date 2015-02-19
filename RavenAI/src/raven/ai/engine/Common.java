@@ -38,7 +38,7 @@ public class Common {
 				else {
 
 					int difference = Common.FormatAngle(Math.abs(Integer.parseInt(valueB) - Integer.parseInt(valueA)));
-
+					
 					if(shapeAName.equalsIgnoreCase(shapeBName)) {
 
 						// Same shape
@@ -286,6 +286,9 @@ public class Common {
 		//int maxGroupScore = 0;
 		int score = 0;
 		int matchCount = 0;
+		if(vObject.AttributeGroups == null) {
+			return 0;
+		}
 		for(AttributeGroup group : vObject.AttributeGroups) {
 			//int groupScore = 0;
 			int maxAttributeScore = 0;

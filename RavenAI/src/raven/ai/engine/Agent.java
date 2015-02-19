@@ -73,18 +73,16 @@ public class Agent {
 		if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByOne) {
 			return SolveTwoByOne(figures);
 		}
-//		else if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByTwo) {
-//			return SolveTwoByTwo(figures);
-//		}
+		else if(Common.GetProblemType(problem.getProblemType()) == ProblemType.TwoByTwo) {
+			return SolveTwoByTwo(figures);
+		}
 
 		return "1";
 	}
 
-	private String SolveTwoByOne(HashMap<String, Figure> figures) {			
+	private List<ViableObject> GenerateViableObjects(Figure figureA, Figure figureB, Figure figureC) {
 
-		Figure figureA = figures.get("A");
-		Figure figureB = figures.get("B");
-		Figure figureC = figures.get("C");
+		List<ViableObject> expectedObjects = new ArrayList<ViableObject>();
 
 		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB, true);
 		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC, false);
@@ -94,33 +92,13 @@ public class Agent {
 
 			ABMapping.PrintMappingInfo();
 			ACMapping.PrintMappingInfo();
-			
+
 			System.out.println("----------------------------");
 		}
 
 		List<Edge> edges = ABMapping.ToEdges();
-		
-		List<ViableAnswer> allAnswers = Common.GetAnswerFigures(figures);	
 
-		List<ViableObject> expectedObjects = new ArrayList<ViableObject>();
 
-		for(Iterator<ViableAnswer> iterator = allAnswers.iterator(); iterator.hasNext();) {
-			ViableAnswer currentAnswer = iterator.next();
-
-			// Eliminate answers with wrong number of nodes
-			int expectedNodeCount = 0;
-			if(figureB.Nodes.size() == figureA.Nodes.size()) {
-				expectedNodeCount = figureC.Nodes.size();
-			}
-			if(figureA.Nodes.size() == figureC.Nodes.size()) {
-				expectedNodeCount = figureB.Nodes.size();
-			}
-
-			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
-				currentAnswer.Incompatible = true;
-			}		
-
-		}
 
 		for(Edge edge : edges) {
 
@@ -151,7 +129,7 @@ public class Agent {
 							}
 						}					
 						else {
-							Node cNode = figureC.FindNode(edge.NodeA.Name);	
+							Node cNode = figureC.FindNode(ACMapping.GetCorrespondingNode2Name(edge.NodeA.Name));	
 							Node bNode = figureB.FindNode(ABMapping.GetCorrespondingNode2Name(edge.NodeA.Name));
 							//Node bNode = figureB.FindNode(cNode.Name);
 
@@ -162,7 +140,7 @@ public class Agent {
 
 								expectedObject.addAttribute(transformation.AttributeName, bNodeAttribute.Value);	
 
-								
+
 								if(cNodeAttribute != null && bNodeAttribute != null) {
 
 									AttributeType attributeType = Common.GetAttributeType(transformation.AttributeName);
@@ -193,10 +171,10 @@ public class Agent {
 
 														// Nothing has changed, create appropriate vobjects
 														expectedObject.addAttribute(transformation.AttributeName, transformation.BeforeAttributeValue);
-														
+
 													}
 													else if(shape.hasVerticalAxisSymmetry()) {
-														
+
 														// Reflected across vertical axis
 														expectedObject.addAttribute("horizontal-flip", "yes");
 														expectedObject.addAttribute("angle", transformation.BeforeAttributeValue);
@@ -211,7 +189,7 @@ public class Agent {
 														expectedObject.addAttribute("angle", cNodeAttribute.Value);
 													}
 													else if(shape.hasVerticalAxisSymmetry()) {
-														
+
 														// Nothing has changed
 														expectedObject.addAttribute(transformation.AttributeName, transformation.BeforeAttributeValue);
 													}
@@ -282,9 +260,11 @@ public class Agent {
 				if(DEBUG) {
 					System.out.println("Expected Object:");
 					System.out.println(expectedObject.Name);
-					for(AttributeGroup group : expectedObject.AttributeGroups) {
-						for(Attribute att : group.Attributes) {
-							System.out.println(att.Name + " : " + att.Value);
+					if(expectedObject.AttributeGroups != null) {
+						for(AttributeGroup group : expectedObject.AttributeGroups) {
+							for(Attribute att : group.Attributes) {
+								System.out.println(att.Name + " : " + att.Value);
+							}
 						}
 					}
 					System.out.println("----------------------------");
@@ -295,7 +275,38 @@ public class Agent {
 			}
 
 
-		}	
+		}
+
+		return expectedObjects;
+	}
+
+	private String SolveTwoByOne(HashMap<String, Figure> figures) {			
+
+		Figure figureA = figures.get("A");
+		Figure figureB = figures.get("B");
+		Figure figureC = figures.get("C");
+
+		List<ViableAnswer> allAnswers = Common.GetAnswerFigures(figures);	
+
+		List<ViableObject> expectedObjects = GenerateViableObjects(figureA, figureB, figureC);
+
+		for(Iterator<ViableAnswer> iterator = allAnswers.iterator(); iterator.hasNext();) {
+			ViableAnswer currentAnswer = iterator.next();
+
+			// Eliminate answers with wrong number of nodes
+			int expectedNodeCount = 0;
+			if(figureB.Nodes.size() == figureA.Nodes.size()) {
+				expectedNodeCount = figureC.Nodes.size();
+			}
+			if(figureA.Nodes.size() == figureC.Nodes.size()) {
+				expectedNodeCount = figureB.Nodes.size();
+			}
+
+			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+				currentAnswer.Incompatible = true;
+			}		
+
+		}
 
 		// Make sure proper ratio of objects is present (add extras if necessary)
 		if(figureA.Nodes.size() == figureB.Nodes.size() && figureC.Nodes.size() != expectedObjects.size()) {
@@ -319,76 +330,7 @@ public class Agent {
 			}
 		}
 
-		for(ViableAnswer currentAnswer : allAnswers) {
-			if(!currentAnswer.Incompatible) {		
-
-				FigurePairMapping CNumMapping = CreateFigurePairMapping(figures.get("C"), figures.get(currentAnswer.AnswerFigure.getName()), true);
-
-				// DEBUG OUTPUT		
-				//				if(DEBUG) {
-				//					System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
-				//					for(NodeMapping map : CNumMapping.NodeMappings) {
-				//						String node1Name = map.Node1 != null ? map.Node1.Name : "";
-				//						String node2Name = map.Node2 != null ? map.Node2.Name : "";
-				//						System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-				//					}
-
-				//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
-				//				}
-
-				List<NodeMapping> expectedObjectMappings = CreateNodeViableObjectMapping(expectedObjects, currentAnswer.AnswerFigure.Nodes);
-
-				for(ViableObject myObject : expectedObjects) {
-
-					Node currentNode = null;
-
-					for(NodeMapping map : expectedObjectMappings) {
-						if(map.Node1 != null) {
-							if(map.Node1.Name.toLowerCase().equals(myObject.Name.toLowerCase())) {
-								currentNode = map.Node2;
-							}
-						}
-					}
-
-					if(currentNode == null) {
-						currentNode = myObject.getCorrespondingNode(currentAnswer.AnswerFigure);
-					}
-
-					// Make sure attribute ratios match
-					if(Common.GetAttributeCount(figureA) + Common.GetAttributeCount(figureB) != Common.GetAttributeCount(figureC) + Common.GetAttributeCount(currentAnswer.AnswerFigure)) {
-						currentAnswer.Score -= 4;
-					}
-
-					for(AttributeGroup group : myObject.AttributeGroups) {
-						for(Attribute myAttribute : group.Attributes) {			
-							Attribute currentAttribute = currentNode.findAttribute(myAttribute.Name);
-							if(currentAttribute != null) {
-								int score = 0;
-
-								score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, currentNode.getShape(), myObject.getShape());
-
-								List<String> myValues = Arrays.asList(myAttribute.Value.split(","));
-								List<String> nodeValues = Arrays.asList(currentAttribute.Value.split(","));
-
-								if(Common.GetAttributeType(myAttribute.Name) == AttributeType.Positional) {
-									for(int i = 0; i < myValues.size(); i++) {
-										myValues.set(i, CNumMapping.GetCorrespondingNode2Name(myValues.get(i)));											
-									}
-								}
-
-								if(Common.ListsEqual(myValues, nodeValues)) {
-									currentAnswer.Score += myValues.size();
-								}
-
-								if(currentAttribute.Value.equals(myAttribute.Value)) {
-									currentAnswer.Score += score;									
-								}
-							}
-						}
-					}
-				}											
-			}		
-		}
+		allAnswers = CheckAnswers(expectedObjects, allAnswers, figures);
 
 		// Sort answers by score
 		Collections.sort(allAnswers);
@@ -412,60 +354,221 @@ public class Agent {
 
 		return allAnswers.get(0).AnswerFigure.getName();
 	}
-	
+
+	private List<ViableAnswer> CheckAnswers(List<ViableObject> expectedObjects, List<ViableAnswer> allAnswers, HashMap<String, Figure> figures) {
+
+		for(ViableAnswer currentAnswer : allAnswers) {
+			if(!currentAnswer.Incompatible) {	
+
+				Figure figureA = figures.get("A");
+				Figure figureB = figures.get("B");
+				Figure figureC = figures.get("C");
+
+				FigurePairMapping CNumMapping = CreateFigurePairMapping(figureC, figures.get(currentAnswer.AnswerFigure.getName()), true);
+
+				if(CNumMapping != null) {
+
+					// DEBUG OUTPUT		
+					//				if(DEBUG) {
+					//					System.out.println("C-Answer " + currentAnswer.AnswerFigure.getName() + " mappings");
+					//					for(NodeMapping map : CNumMapping.NodeMappings) {
+					//						String node1Name = map.Node1 != null ? map.Node1.Name : "";
+					//						String node2Name = map.Node2 != null ? map.Node2.Name : "";
+					//						System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
+					//					}
+
+					//System.out.println("Answer " + currentAnswer.AnswerFigure.getName() + " score: " + totalScore);							
+					//				}
+
+					List<NodeMapping> expectedObjectMappings = CreateNodeViableObjectMapping(expectedObjects, currentAnswer.AnswerFigure.Nodes);
+
+					for(ViableObject myObject : expectedObjects) {
+
+						Node currentNode = null;
+
+						for(NodeMapping map : expectedObjectMappings) {
+							if(map.Node1 != null) {
+								if(map.Node1.Name.toLowerCase().equals(myObject.Name.toLowerCase())) {
+									currentNode = map.Node2;
+								}
+							}
+						}
+
+						if(currentNode == null) {
+							currentNode = myObject.getCorrespondingNode(currentAnswer.AnswerFigure);
+						}
+
+						// Make sure attribute ratios match
+						if(Common.GetAttributeCount(figureA) + Common.GetAttributeCount(figureB) != Common.GetAttributeCount(figureC) + Common.GetAttributeCount(currentAnswer.AnswerFigure)) {
+							currentAnswer.Score -= 4;
+						}
+
+						if(myObject.AttributeGroups != null) {
+							for(AttributeGroup group : myObject.AttributeGroups) {
+								for(Attribute myAttribute : group.Attributes) {			
+									Attribute currentAttribute = currentNode.findAttribute(myAttribute.Name);
+									if(currentAttribute != null) {
+										int score = 0;
+
+										score = Common.GetTransformationScore(currentAttribute.Name, currentAttribute.Value, myAttribute.Value, currentNode.getShape(), myObject.getShape());
+
+										List<String> myValues = Arrays.asList(myAttribute.Value.split(","));
+										List<String> nodeValues = Arrays.asList(currentAttribute.Value.split(","));
+
+										if(Common.GetAttributeType(myAttribute.Name) == AttributeType.Positional) {
+											for(int i = 0; i < myValues.size(); i++) {
+												String tempNodeName = CNumMapping.GetCorrespondingNode2Name(myValues.get(i));
+												if(tempNodeName != null) {
+													myValues.set(i, tempNodeName);	
+												}
+											}
+										}
+
+										if(Common.ListsEqual(myValues, nodeValues)) {
+											currentAnswer.Score += myValues.size();
+										}
+
+										if(currentAttribute.Value.equals(myAttribute.Value)) {
+											currentAnswer.Score += score;									
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}		
+		}
+		return allAnswers;
+	}
+
 	private String SolveTwoByTwo(HashMap<String, Figure> figures) {		
-		
+
 		Figure figureA = figures.get("A");
 		Figure figureB = figures.get("B");
 		Figure figureC = figures.get("C");
 
-		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB, true);
-		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC, false);
+		List<ViableAnswer> allAnswersHorizontal = Common.GetAnswerFigures(figures);	
+		List<ViableAnswer> allAnswersVertical = Common.GetAnswerFigures(figures);	
 
-		// DEBUG OUTPUT	
+		List<ViableObject> expectedObjectsHorizontal = GenerateViableObjects(figureA, figureB, figureC);
+		List<ViableObject> expectedObjectsVertical = GenerateViableObjects(figureA, figureC, figureB);
+
+		//		for(Iterator<ViableAnswer> iterator = allAnswers.iterator(); iterator.hasNext();) {
+		//			ViableAnswer currentAnswer = iterator.next();
+		//
+		//			// Eliminate answers with wrong number of nodes
+		//			int expectedNodeCount = 0;
+		//			if(figureB.Nodes.size() == figureA.Nodes.size()) {
+		//				expectedNodeCount = figureC.Nodes.size();
+		//			}
+		//			if(figureA.Nodes.size() == figureC.Nodes.size()) {
+		//				expectedNodeCount = figureB.Nodes.size();
+		//			}
+		//
+		//			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
+		//				currentAnswer.Incompatible = true;
+		//			}		
+		//
+		//		}
+
+		// Make sure proper ratio of objects is present (add extras if necessary)
+		//		if(figureA.Nodes.size() == figureB.Nodes.size() && figureC.Nodes.size() != expectedObjects.size()) {
+		//			int count = figureC.Nodes.size() - expectedObjects.size();
+		//			for(int i = 0;i < count; i++) {
+		//				ViableObject newObject = new ViableObject();
+		//				List<String> usedNodeNames = new ArrayList<String>();
+		//				for(ViableObject object : expectedObjects) {
+		//					usedNodeNames.add(object.Name);
+		//				}
+		//
+		//				// Generate new node name for object
+		//				newObject.Name = Common.GenerateRandomLetter(usedNodeNames);
+		//
+		//				for(AttributeGroup group : expectedObjects.get(0).AttributeGroups) {
+		//					for(Attribute att : group.Attributes) {
+		//						newObject.addAttribute(att.Name, att.Value);					
+		//					}
+		//				}
+		//				expectedObjects.add(newObject);
+		//			}
+		//		}
+
+		allAnswersHorizontal = CheckAnswers(expectedObjectsHorizontal, allAnswersHorizontal, figures);
+		allAnswersVertical = CheckAnswers(expectedObjectsVertical, allAnswersVertical, figures);
+
+		// Sort answers by score
+		//Collections.sort(allAnswersHorizontal);
+		//Collections.sort(allAnswersVertical);
+		
+		HashMap<String, Integer> scoreList = new HashMap<String, Integer>();
+		
+		for(ViableAnswer answer : allAnswersHorizontal) {
+			scoreList.put(answer.AnswerFigure.getName(), answer.Score);
+		}
+		
+		for(ViableAnswer answer : allAnswersVertical) {
+			if(scoreList.containsKey(answer.AnswerFigure.getName())) {
+				
+				// Add scores together
+				int newScore = answer.Score;
+				newScore += scoreList.get(answer.AnswerFigure.getName());
+				scoreList.put(answer.AnswerFigure.getName(), newScore);
+			}
+			else {
+				
+				// Append new score
+				scoreList.put(answer.AnswerFigure.getName(), answer.Score);
+			}
+		}
+		
+		int maxScore = 0;
+		String bestAnswer = "-1";
+		
+		Iterator it = scoreList.entrySet().iterator();
+		
 		if(DEBUG) {
-
-			System.out.println("A --> B Node Mappings");			
-			for(NodeMapping map : ABMapping.NodeMappings) {
-				String node1Name = map.Node1 != null ? map.Node1.Name : "";
-				String node2Name = map.Node2 != null ? map.Node2.Name : "";
-				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-			}
-			
-			System.out.println("A --> C Node Mappings");			
-			for(NodeMapping map : ACMapping.NodeMappings) {
-				String node1Name = map.Node1 != null ? map.Node1.Name : "";
-				String node2Name = map.Node2 != null ? map.Node2.Name : "";
-				System.out.println(node1Name + " -> " + node2Name + " Score: " + map.Score);
-			}
-			
-			System.out.println("----------------------------");
+			System.out.println("POSSIBLE ANSWERS");
 		}
 
-		List<Edge> edges = ABMapping.ToEdges();
+		while(it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			int score = (Integer)pairs.getValue();
+
+			if(score >= maxScore) {
+				maxScore = score;
+				bestAnswer = (String)pairs.getKey();
+			}
+			
+			if(DEBUG) {							
+				System.out.println((String)pairs.getKey() + " : " + (Integer)pairs.getValue());					
+			}
+
+		}
 		
-		List<ViableAnswer> allAnswers = Common.GetAnswerFigures(figures);	
+		if(DEBUG) {
+			System.out.println("");
+		}
+		
 
-		List<ViableObject> expectedObjects = new ArrayList<ViableObject>();
+		//		if(DEBUG) {
+		//			System.out.println("POSSIBLE ANSWERS");
+		//			for(ViableAnswer pAnswer : allAnswers) {
+		//				if(!pAnswer.Incompatible) {
+		//					System.out.println(pAnswer.AnswerFigure.getName() + " : " + pAnswer.Score);
+		//				}
+		//			}
+		//
+		//			System.out.println("");
+		//		}
+		//
+		//		// Return GUESS if guessing during debug
+		//		if(DEBUG && allAnswers.size() > 1 && allAnswers.get(0).Score == allAnswers.get(1).Score) {
+		//			System.out.println("Guessing...");
+		//			return "GUESS";
+		//		}
 
-//		for(Iterator<ViableAnswer> iterator = allAnswers.iterator(); iterator.hasNext();) {
-//			ViableAnswer currentAnswer = iterator.next();
-//
-//			// Eliminate answers with wrong number of nodes
-//			int expectedNodeCount = 0;
-//			if(figureB.Nodes.size() == figureA.Nodes.size()) {
-//				expectedNodeCount = figureC.Nodes.size();
-//			}
-//			if(figureA.Nodes.size() == figureC.Nodes.size()) {
-//				expectedNodeCount = figureB.Nodes.size();
-//			}
-//
-//			if(expectedNodeCount != 0 && expectedNodeCount != currentAnswer.AnswerFigure.Nodes.size()) {
-//				currentAnswer.Incompatible = true;
-//			}		
-//
-//		}	
-		return "";
+		return bestAnswer;
 	}
 
 	private HashMap<String, Figure> CreateFigures(HashMap<String, RavensFigure> figures) {
@@ -699,6 +802,9 @@ public class Agent {
 		FigurePairMapping figureMapping = new FigurePairMapping();
 		figureMapping.Figure1 = figure1;
 		figureMapping.Figure2 = figure2;
+		if(figure2 == null || figure2.Nodes.size() == 0) {
+			return null;
+		}
 		figureMapping.NodeMappings = CreateNodePairMapping(figure1.Nodes, figure2.Nodes, isTransformation);	
 
 		return figureMapping;

@@ -11,6 +11,9 @@ public class Figure {
 	}
 		
 	public Node FindNode(String nodeName) {
+		if(Nodes == null || nodeName == null) {
+			return null;
+		}
 		for(Node node : Nodes) {
 			if(node.Name.toLowerCase().equals(nodeName.toLowerCase())) {
 				return node;
