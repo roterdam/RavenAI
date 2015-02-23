@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class Agent {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	/**
 	 * The default constructor for your Agent. Make sure to execute any
@@ -491,7 +491,9 @@ public class Agent {
 												if(n.Name.equalsIgnoreCase(dNodeName)) {
 													if(n.containsAttribute("angle") && n.findAttribute("angle").Value.equalsIgnoreCase(String.valueOf(symmetricAngle))) {
 														currentAnswer.Score += 7;
-														System.out.println("SYMMETRIC BONUS GIVEN");
+														if(DEBUG) {
+															System.out.println("SYMMETRIC BONUS GIVEN FOR ANSWER " + currentAnswer.AnswerFigure.getName());
+														}
 													}
 												}
 											}
