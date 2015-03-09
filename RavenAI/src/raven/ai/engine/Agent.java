@@ -8,6 +8,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+
 /**
  * Your Agent for solving Raven's Progressive Matrices. You MUST modify this
  * file.
@@ -34,7 +39,7 @@ public class Agent {
 	 * 
 	 */
 	public Agent() {
-
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 	}
 	/**
 	 * The primary method for solving incoming Raven's Progressive Matrices.
@@ -58,15 +63,15 @@ public class Agent {
 	 * returns will be ignored; otherwise, the answer returned at the end of
 	 * Solve will be taken as your Agent's answer to this problem.
 	 * 
-	 * @param problem the RavensProblem your agent should solve
+	 * @param problem the VisualRavensProblem your agent should solve
 	 * @return your Agent's answer to this problem
 	 */
-	public String Solve(RavensProblem problem) {
+	public String Solve(VisualRavensProblem problem) {
 
 		if(DEBUG) {
 			System.out.println("PROBLEM " + problem.getName());
 			System.out.println("============================");
-		}
+		}					
 
 		HashMap<String, Figure> figures = CreateFigures(problem.getFigures());
 
@@ -86,6 +91,8 @@ public class Agent {
 
 		FigurePairMapping ABMapping = CreateFigurePairMapping(figureA, figureB, true);
 		FigurePairMapping ACMapping = CreateFigurePairMapping(figureA, figureC, false);
+		
+		Mat m = new Mat(5, 10, CvType.CV_8UC1, new Scalar(0));
 
 		// DEBUG OUTPUT	
 		if(DEBUG) {
